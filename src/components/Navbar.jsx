@@ -1,11 +1,22 @@
 import React, { useContext, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import GrievanceMap from "../components/GrievanceMap";
 import {
   fetchNotifications,
   markAsRead,
 } from "../services/notificationService";
+
+// Helper component for Mobile Links to prevent "MobileNavLink is not defined" error
+const MobileNavLink = ({ to, icon, label, onClick }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className="flex items-center gap-4 px-4 py-4 text-[#1E293B] font-bold text-sm hover:bg-blue-50 rounded-2xl transition-all"
+  >
+    <span className="text-xl">{icon}</span>
+    {label}
+  </Link>
+);
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -183,13 +194,6 @@ export default function Navbar() {
                   </div>
                 )}
 
-                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm mt-10">
-                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <span>🌍</span>  Heatmap 
-                  </h2>
-                  <GrievanceMap complaints={complaints} />
-                </div>
-
                 {/* Profile Dropdown Area */}
                 <div className="relative profile-dropdown">
                   <button
@@ -232,7 +236,6 @@ export default function Navbar() {
                         </p>
                       </div>
 
-                      {/* ✅ दोन्ही Admins ला 'View Feedbacks' दिसेल */}
                       {(user.role === "ADMIN" || user.role === "OFFICER") && (
                         <Link
                           to="/view-feedbacks"
@@ -296,15 +299,12 @@ export default function Navbar() {
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[999] md:hidden">
-          {/* Full Screen Overlay - Darker for Light Theme Visibility */}
           <div
             className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-md transition-opacity duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
 
-          {/* Right-aligned Full-Height Drawer Panel */}
           <div className="fixed right-0 top-0 bottom-0 h-full w-[300px] bg-white shadow-[-15px_0_40px_rgba(0,0,0,0.2)] flex flex-col animate-in slide-in-from-right duration-500 ease-out">
-            {/* Header with Dark Blue Text */}
             <div className="px-6 py-8 flex justify-between items-center border-b border-slate-100 bg-white">
               <div>
                 <span className="block text-[10px] font-black text-blue-700 uppercase tracking-widest">
@@ -322,11 +322,9 @@ export default function Navbar() {
               </button>
             </div>
 
-            {/* Main Content Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
               {user ? (
                 <div className="flex flex-col h-full">
-                  {/* Dark Blue Profile Card */}
                   <div className="p-6 bg-[#1E293B] rounded-[2rem] mb-6 shadow-xl shadow-blue-900/10">
                     <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">
                       Authorized Session
@@ -339,29 +337,43 @@ export default function Navbar() {
                     </p>
                   </div>
 
-                  {/* Navigation Links with Dark Blue Text */}
                   <nav className="flex flex-col gap-1">
                     <MobileNavLink
-                      to="/user-dashboard"
+                      to={getHomeLink()}
                       icon="📊"
                       label="Dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
                     />
 
-                    {user &&
-                      (user.role === "ADMIN" || user.role === "OFFICER") && (
-                        <div className="mt-4 pt-4 border-t border-slate-100">
-                          <MobileNavLink
-                            to="/view-feedbacks"
-                            icon="📈"
-                            label="Officer Panel"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          />
-                        </div>
-                      )}
+                    {user.role === "CITIZEN" && (
+                      <>
+                        <MobileNavLink
+                          to="/complaint"
+                          icon="✍️"
+                          label="Raise Complaint"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <MobileNavLink
+                          to="/my-complaints"
+                          icon="📜"
+                          label="My History"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                      </>
+                    )}
+
+                    {(user.role === "ADMIN" || user.role === "OFFICER") && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <MobileNavLink
+                          to="/view-feedbacks"
+                          icon="📈"
+                          label="Officer Panel"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                      </div>
+                    )}
                   </nav>
 
-                  {/* System Logout - Pushed to Bottom */}
                   <div className="mt-auto pt-6 border-t border-slate-100">
                     <button
                       onClick={logout}
@@ -389,7 +401,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Footer Branded Tag */}
             <div className="p-8 text-center bg-slate-50/50">
               <p className="text-[9px] font-black text-[#1E293B]/40 uppercase tracking-[0.4em]">
                 Muni-Portal • 2026
