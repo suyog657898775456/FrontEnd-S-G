@@ -246,6 +246,7 @@ export default function AdminDashboard() {
               <tr>
                 <th className="px-8 py-5">Citizen</th>
                 <th className="px-8 py-5">Department</th>
+                <th className="px-8 py-6 text-center">Priority</th>
                 <th className="px-8 py-5 text-center">Status</th>
                 <th className="px-8 py-5 text-right">Action</th>
               </tr>
@@ -267,6 +268,21 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-8 py-6 text-sm font-black text-blue-500 uppercase">
                     {c.department}
+                  </td>
+                  <td className="px-8 py-6 text-center">
+                    <span
+                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${
+                        c.priority === "CRITICAL"
+                          ? "bg-red-100 text-red-700 border-red-200 animate-pulse"
+                          : c.priority === "HIGH"
+                            ? "bg-orange-100 text-orange-700 border-orange-200"
+                            : c.priority === "MEDIUM"
+                              ? "bg-blue-100 text-blue-700 border-blue-200"
+                              : "bg-slate-100 text-slate-600 border-slate-200" // Low or Default
+                      }`}
+                    >
+                      {c.priority || "LOW"}
+                    </span>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span
@@ -375,8 +391,13 @@ export default function AdminDashboard() {
                   ) : (
                     <img
                       src={`http://127.0.0.1:8000${viewDetails.image}`}
-                      className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-xl"
+                      className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-xl cursor-zoom-in"
                       alt="Initial Evidence"
+                      onClick={() =>
+                        setSelectedImg(
+                          `http://127.0.0.1:8000${viewDetails.image}`,
+                        )
+                      }
                     />
                   )}
                   <a

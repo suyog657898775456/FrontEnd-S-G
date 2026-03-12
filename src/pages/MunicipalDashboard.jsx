@@ -341,8 +341,15 @@ const MunicipalDashboard = () => {
                             ? viewDetails.image
                             : `http://127.0.0.1:8000${viewDetails.image}`
                         }
-                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg"
+                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg cursor-zoom-in"
                         alt="Before"
+                        onClick={() =>
+                          setSelectedImg(
+                            viewDetails.image?.startsWith("http")
+                              ? viewDetails.image
+                              : `http://127.0.0.1:8000${viewDetails.image}`,
+                          )
+                        }
                       />
                     </div>
                     <div className="relative group">
@@ -355,8 +362,15 @@ const MunicipalDashboard = () => {
                             ? viewDetails.after_image
                             : `http://127.0.0.1:8000${viewDetails.after_image}`
                         }
-                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg"
+                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg cursor-zoom-in"
                         alt="After"
+                        onClick={() =>
+                          setSelectedImg(
+                            viewDetails.after_image?.startsWith("http")
+                              ? viewDetails.after_image
+                              : `http://127.0.0.1:8000${viewDetails.after_image}`,
+                          )
+                        }
                       />
                     </div>
                   </div>
@@ -368,8 +382,15 @@ const MunicipalDashboard = () => {
                           ? viewDetails.image
                           : `http://127.0.0.1:8000${viewDetails.image}`
                       }
-                      className="w-full h-64 object-cover rounded-[2.5rem] border-4 border-white shadow-2xl"
+                      className="w-full h-64 object-cover rounded-[2.5rem] border-4 border-white shadow-2xl cursor-zoom-in"
                       alt="Initial Evidence"
+                      onClick={() =>
+                        setSelectedImg(
+                          viewDetails.image?.startsWith("http")
+                            ? viewDetails.image
+                            : `http://127.0.0.1:8000${viewDetails.image}`,
+                        )
+                      }
                     />
                     <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
                       Initial Evidence Photo
@@ -379,9 +400,10 @@ const MunicipalDashboard = () => {
                 <a
                   href={
                     viewDetails.formatted_address ||
-                    `http://maps.google.com/?q=${viewDetails.latitude},${viewDetails.longitude}`
+                    `https://www.google.com/maps/search/?api=1&query=${viewDetails.latitude},${viewDetails.longitude}`
                   }
                   target="_blank"
+                  rel="noreferrer"
                   className="block w-full bg-slate-800 text-white p-5 rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-700 transition-all"
                 >
                   📍 Launch GPS Navigation
