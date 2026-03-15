@@ -19,15 +19,17 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function HeatmapLayer({ points }) {
   const map = useMap();
   useEffect(() => {
-    if (!map || !points.length) return;
+    if (!map || !points || points.length === 0) return;
+
     const heatLayer = L.heatLayer(points, {
-      radius: 30,
-      blur: 20,
+      radius: 35,
+      blur: 15,
       maxZoom: 10,
       gradient: { 0.4: "blue", 0.6: "lime", 0.8: "orange", 1.0: "red" },
     }).addTo(map);
+
     return () => {
-      if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+      if (map && map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
     };
   }, [map, points]);
   return null;
@@ -35,14 +37,14 @@ function HeatmapLayer({ points }) {
 
 const GrievanceMap = ({ complaints, onMarkerClick }) => {
   const [mapFilter, setMapFilter] = useState("All");
-  const center = [20.7, 77.0];
+  const center = [20.9374, 77.7796]; // Centered specifically on Amravati region
 
   // 1. Data Processing for Stats Overlay
   const getDistrictStats = () => {
     const districts = { Amravati: 0, Akola: 0, Buldhana: 0 };
     complaints.forEach((c) => {
-      // Logic: Address ya description mein district ka naam dhoondo
-      const text = (c.formatted_address + c.description).toLowerCase();
+      const text =
+        `${c.formatted_address || ""} ${c.description || ""}`.toLowerCase();
       if (text.includes("amravati")) districts.Amravati++;
       else if (text.includes("akola")) districts.Akola++;
       else if (text.includes("buldhana")) districts.Buldhana++;
@@ -66,15 +68,16 @@ const GrievanceMap = ({ complaints, onMarkerClick }) => {
 
   return (
     <div className="space-y-4 relative">
+      {/* Department Quick Filters */}
       <div className="flex flex-wrap gap-2 mb-2">
         {["All", "Road", "Light", "Water", "Sewage", "Garbage"].map((dept) => (
           <button
             key={dept}
             onClick={() => setMapFilter(dept)}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border transition-all ${
+            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all duration-300 ${
               mapFilter === dept
-                ? "bg-slate-800 text-white shadow-md"
-                : "bg-white text-slate-400"
+                ? "bg-slate-900 text-white shadow-lg shadow-slate-200 border-slate-900"
+                : "bg-white text-slate-400 hover:border-slate-200"
             }`}
           >
             {dept}
@@ -84,58 +87,70 @@ const GrievanceMap = ({ complaints, onMarkerClick }) => {
 
       <div className="h-[550px] w-full rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white relative z-10">
         {/* ✨ District Stats Overlay Box */}
-        <div className="absolute top-6 right-6 z-[1000] bg-white/80 backdrop-blur-md p-5 rounded-[2rem] border border-white/50 shadow-xl hidden md:block w-48 animate-in slide-in-from-right duration-500">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
+        <div className="absolute top-6 right-6 z-[1000] bg-white/90 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/50 shadow-2xl hidden md:block w-52 animate-in slide-in-from-right duration-700">
+          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
             Regional Summary
           </p>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Object.entries(distStats).map(([name, count]) => (
-              <div key={name} className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-700">{name}</span>
+              <div
+                key={name}
+                className="flex justify-between items-center group"
+              >
+                <span className="text-xs font-black text-slate-700 group-hover:text-blue-600 transition-colors">
+                  {name}
+                </span>
                 <span
-                  className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${count > 10 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"}`}
+                  className={`text-[10px] font-black px-3 py-1 rounded-full shadow-sm transition-all ${
+                    count > 10
+                      ? "bg-red-50 text-red-600"
+                      : "bg-blue-50 text-blue-600"
+                  }`}
                 >
-                  {count} Cases
+                  {count}
                 </span>
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-200/50">
-            <p className="text-[9px] font-bold text-slate-500 italic text-center">
-              Active Monitoring Live
+          <div className="mt-6 pt-4 border-t border-slate-100">
+            <p className="text-[9px] font-black text-slate-400 uppercase text-center tracking-tighter">
+              Geo-Intelligence Active
             </p>
           </div>
         </div>
 
         <MapContainer
           center={center}
-          zoom={8}
+          zoom={9}
+          scrollWheelZoom={false}
           style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" // Modern Light Theme Tiles
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
           />
           <HeatmapLayer points={heatPoints} />
+
           {filteredData.map((c) => (
             <Marker
               key={c.id}
               position={[parseFloat(c.latitude), parseFloat(c.longitude)]}
               eventHandlers={{ click: () => onMarkerClick(c) }}
             >
-              <Popup>
-                <div className="p-1 text-center font-sans">
-                  <p className="text-[10px] font-bold text-blue-600">
-                    ID: #{c.id}
+              <Popup className="custom-popup">
+                <div className="p-2 text-center font-sans min-w-[120px]">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">
+                    #{c.id}
                   </p>
-                  <p className="text-xs font-black uppercase text-slate-800">
+                  <p className="text-sm font-black text-slate-800 mb-2 leading-tight">
                     {c.department}
                   </p>
                   <button
                     onClick={() => onMarkerClick(c)}
-                    className="mt-2 bg-slate-800 text-white text-[9px] px-3 py-1 rounded-full font-black uppercase"
+                    className="w-full bg-slate-900 text-white text-[9px] py-2 rounded-xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-md"
                   >
-                    Details
+                    Analyze Details
                   </button>
                 </div>
               </Popup>

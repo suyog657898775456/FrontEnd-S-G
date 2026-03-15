@@ -122,7 +122,7 @@ const MunicipalDashboard = () => {
 
   if (loading)
     return (
-      <div className="p-20 text-center text-blue-600 font-black animate-pulse text-xl">
+      <div className="p-20 text-center text-blue-600 font-black animate-pulse text-xl tracking-widest">
         SYNCING {user?.department} RECORDS...
       </div>
     );
@@ -328,21 +328,67 @@ const MunicipalDashboard = () => {
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">
                   Visual Comparison
                 </label>
-                {/* Before/After Visualizer */}
+                {/* Before/After Visualizer - FIXED WIDTH & ASPECT RATIO */}
                 {viewDetails.status === "resolved" ? (
                   <div className="space-y-6">
                     <div className="relative group">
                       <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl">
                         BEFORE REPAIR
                       </span>
+                      <div className="w-full aspect-video rounded-[2rem] overflow-hidden border-4 border-white shadow-lg bg-slate-100">
+                        <img
+                          src={
+                            viewDetails.image?.startsWith("http")
+                              ? viewDetails.image
+                              : `http://127.0.0.1:8000${viewDetails.image}`
+                          }
+                          className="w-full h-full object-contain cursor-zoom-in"
+                          alt="Before"
+                          onClick={() =>
+                            setSelectedImg(
+                              viewDetails.image?.startsWith("http")
+                                ? viewDetails.image
+                                : `http://127.0.0.1:8000${viewDetails.image}`,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="relative group">
+                      <span className="absolute top-4 left-4 z-10 bg-emerald-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl">
+                        AFTER REPAIR
+                      </span>
+                      <div className="w-full aspect-video rounded-[2rem] overflow-hidden border-4 border-white shadow-lg bg-slate-100">
+                        <img
+                          src={
+                            viewDetails.after_image?.startsWith("http")
+                              ? viewDetails.after_image
+                              : `http://127.0.0.1:8000${viewDetails.after_image}`
+                          }
+                          className="w-full h-full object-contain cursor-zoom-in"
+                          alt="After"
+                          onClick={() =>
+                            setSelectedImg(
+                              viewDetails.after_image?.startsWith("http")
+                                ? viewDetails.after_image
+                                : `http://127.0.0.1:8000${viewDetails.after_image}`,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="w-full aspect-square md:aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-slate-100">
                       <img
                         src={
                           viewDetails.image?.startsWith("http")
                             ? viewDetails.image
                             : `http://127.0.0.1:8000${viewDetails.image}`
                         }
-                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg cursor-zoom-in"
-                        alt="Before"
+                        className="w-full h-full object-contain cursor-zoom-in"
+                        alt="Initial Evidence"
                         onClick={() =>
                           setSelectedImg(
                             viewDetails.image?.startsWith("http")
@@ -352,55 +398,15 @@ const MunicipalDashboard = () => {
                         }
                       />
                     </div>
-                    <div className="relative group">
-                      <span className="absolute top-4 left-4 z-10 bg-emerald-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl">
-                        AFTER REPAIR
-                      </span>
-                      <img
-                        src={
-                          viewDetails.after_image?.startsWith("http")
-                            ? viewDetails.after_image
-                            : `http://127.0.0.1:8000${viewDetails.after_image}`
-                        }
-                        className="w-full h-40 object-cover rounded-[2rem] border-4 border-white shadow-lg cursor-zoom-in"
-                        alt="After"
-                        onClick={() =>
-                          setSelectedImg(
-                            viewDetails.after_image?.startsWith("http")
-                              ? viewDetails.after_image
-                              : `http://127.0.0.1:8000${viewDetails.after_image}`,
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <img
-                      src={
-                        viewDetails.image?.startsWith("http")
-                          ? viewDetails.image
-                          : `http://127.0.0.1:8000${viewDetails.image}`
-                      }
-                      className="w-full h-64 object-cover rounded-[2.5rem] border-4 border-white shadow-2xl cursor-zoom-in"
-                      alt="Initial Evidence"
-                      onClick={() =>
-                        setSelectedImg(
-                          viewDetails.image?.startsWith("http")
-                            ? viewDetails.image
-                            : `http://127.0.0.1:8000${viewDetails.image}`,
-                        )
-                      }
-                    />
                     <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                      Initial Evidence Photo
+                      Initial Evidence Photo (Full Visibility)
                     </p>
                   </div>
                 )}
                 <a
                   href={
                     viewDetails.formatted_address ||
-                    `https://www.google.com/maps/search/?api=1&query=${viewDetails.latitude},${viewDetails.longitude}`
+                    `https://www.google.com/maps?q=${viewDetails.latitude},${viewDetails.longitude}`
                   }
                   target="_blank"
                   rel="noreferrer"

@@ -119,7 +119,7 @@ const Register = () => {
 
           <input
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password (must include @, #, etc.)"
             required
             className="w-full border p-3 rounded-lg"

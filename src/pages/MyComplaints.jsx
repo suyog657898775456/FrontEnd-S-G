@@ -6,8 +6,16 @@ export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedComplaint, setSelectedComplaint] = useState(null); // ✨ डिटेल पॉपअपसाठी स्टेट
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const navigate = useNavigate();
+
+  // ✨ Helper to fix Image Paths
+  const getFullImgUrl = (path) => {
+    if (!path)
+      return "https://via.placeholder.com/400x300?text=No+Evidence+Uploaded";
+    if (path.startsWith("http")) return path;
+    return `http://127.0.0.1:8000${path}`;
+  };
 
   useEffect(() => {
     loadData();
@@ -15,7 +23,7 @@ export default function MyComplaints() {
 
   const loadData = async () => {
     try {
-      const data = await fetchUserComplaints(); // GET /api/grievances/citizen/
+      const data = await fetchUserComplaints();
       setComplaints(data || []);
     } catch (error) {
       console.error("Failed to load complaints", error);
@@ -45,8 +53,8 @@ export default function MyComplaints() {
 
   if (loading)
     return (
-      <div className="p-20 text-center text-blue-600 font-black animate-pulse">
-        SYNCING YOUR REPORTS...
+      <div className="p-20 text-center text-blue-600 font-black animate-pulse uppercase tracking-widest">
+        Syncing Your Secure Reports...
       </div>
     );
 
@@ -112,7 +120,7 @@ export default function MyComplaints() {
               </div>
               <button
                 onClick={() => setSelectedComplaint(null)}
-                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-3xl"
+                className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-3xl transition-all"
               >
                 ×
               </button>
@@ -130,43 +138,55 @@ export default function MyComplaints() {
                 <StatusTimeline status={selectedComplaint.status} />
               </div>
 
-              {/* ✨ Visual Comparison (Before vs After) */}
+              {/* ✨ Visual Comparison (Improved Logic) */}
               <div className="space-y-4">
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                   Work Evidence
                 </label>
                 {selectedComplaint.status?.toLowerCase() === "resolved" ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <span className="block mb-2 text-red-600 text-[10px] font-black uppercase tracking-wider">
-                         ● Initial Photo
+                    <div className="space-y-2">
+                      <span className="inline-block px-3 py-1 bg-red-50 text-red-600 text-[9px] font-black uppercase rounded-lg border border-red-100">
+                        Initial Condition
                       </span>
                       <img
-                        src={`http://127.0.0.1:8000${selectedComplaint.image}`}
-                        className="w-full h-48 object-cover rounded-3xl border-4 border-white shadow-lg"
-                        alt="Before"
+                        src={getFullImgUrl(selectedComplaint.image)}
+                        className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-lg"
+                        alt="Initial"
+                        onError={(e) =>
+                          (e.target.src =
+                            "https://via.placeholder.com/400x300?text=Initial+Photo+Missing")
+                        }
                       />
                     </div>
-                    <div>
-                      <span className="block mb-2 text-emerald-600 text-[10px] font-black uppercase tracking-wider">
-                         ● Fixed Photo
+                    <div className="space-y-2">
+                      <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase rounded-lg border border-emerald-100">
+                        Resolution Proof
                       </span>
                       <img
-                        src={`http://127.0.0.1:8000${selectedComplaint.after_image}`}
-                        className="w-full h-48 object-cover rounded-3xl border-4 border-white shadow-lg"
-                        alt="After"
+                        src={getFullImgUrl(selectedComplaint.after_image)}
+                        className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-lg"
+                        alt="Fixed"
+                        onError={(e) =>
+                          (e.target.src =
+                            "https://via.placeholder.com/400x300?text=Fixed+Photo+Missing")
+                        }
                       />
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <span className="block mb-2 text-blue-600 text-[10px] font-black uppercase tracking-wider">
-                       ● Reported Image
+                  <div className="space-y-2">
+                    <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-black uppercase rounded-lg border border-blue-100">
+                      Your Reported Evidence
                     </span>
                     <img
-                      src={`http://127.0.0.1:8000${selectedComplaint.image}`}
+                      src={getFullImgUrl(selectedComplaint.image)}
                       className="w-full h-64 object-cover rounded-[2.5rem] border-4 border-white shadow-xl"
                       alt="Reported"
+                      onError={(e) =>
+                        (e.target.src =
+                          "https://via.placeholder.com/400x300?text=Image+Not+Found")
+                      }
                     />
                   </div>
                 )}
@@ -176,18 +196,18 @@ export default function MyComplaints() {
               {selectedComplaint.status?.toLowerCase() === "resolved" && (
                 <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
                   <label className="text-[11px] font-black text-emerald-700 uppercase block mb-2">
-                    Municipal Note
+                    Municipal Remarks
                   </label>
                   <p className="text-sm font-bold text-emerald-800 italic">
                     "
                     {selectedComplaint.resolution_note ||
-                      "Issue resolved as per the report."}
+                      "Resolved as per official guidelines."}
                     "
                   </p>
                 </div>
               )}
 
-              {/* Map & Feedback Button */}
+              {/* Action Buttons */}
               <div className="flex flex-col gap-4">
                 {selectedComplaint.latitude && (
                   <a
@@ -199,7 +219,7 @@ export default function MyComplaints() {
                     rel="noreferrer"
                     className="w-full bg-slate-800 text-white p-5 rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-700 transition-all"
                   >
-                    📍 Track Exact Map Location
+                    📍 Track Map Location
                   </a>
                 )}
 
@@ -213,7 +233,7 @@ export default function MyComplaints() {
                         },
                       })
                     }
-                    className="w-full bg-emerald-600 text-white p-5 rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 hover:bg-emerald-700"
+                    className="w-full bg-emerald-600 text-white p-5 rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all"
                   >
                     ⭐ Rate Service Quality
                   </button>
@@ -255,11 +275,11 @@ function ComplaintGroup({ title, data, color, onCardClick }) {
               <span
                 className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${color === "emerald" ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-400"}`}
               >
-                {c.status}
+                {c.status?.replace("_", " ")}
               </span>
             </div>
             <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400">
-              <span className="text-blue-500">#{c.id}</span>
+              <span className="text-blue-500 font-black">ID: #{c.id}</span>
               <span>{new Date(c.created_at).toLocaleDateString()}</span>
             </div>
           </div>
@@ -269,43 +289,42 @@ function ComplaintGroup({ title, data, color, onCardClick }) {
   );
 }
 
-/* 🔹 Timeline (Keep existing logic) */
 function StatusTimeline({ status }) {
-  const steps = ["Assigned", "Pending", "In progress", "Resolved"];
+  const steps = ["Submitted", "Pending", "In Progress", "Resolved"];
   const currentStatus = status?.toLowerCase();
   let activeIndex = 0;
   if (["pending", "submitted"].includes(currentStatus)) activeIndex = 1;
   if (["assigned", "in progress", "in_progress"].includes(currentStatus))
-    activeIndex = 3;
-  if (currentStatus === "resolved") activeIndex = 4;
+    activeIndex = 2;
+  if (currentStatus === "resolved") activeIndex = 3;
 
   if (currentStatus === "rejected")
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] tracking-widest text-center border border-red-100 animate-pulse">
-        Report Rejected
+      <div className="p-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] tracking-widest text-center border border-red-100">
+        Report Rejected by Authority
       </div>
     );
 
   return (
-    <div className="py-4 px-2">
+    <div className="py-6 px-2">
       <div className="flex justify-between items-center relative">
         <div className="absolute top-1/2 left-0 w-full h-[2px] bg-slate-100 -translate-y-1/2 z-0" />
         <div
           className="absolute top-1/2 left-0 h-[2px] bg-blue-500 -translate-y-1/2 z-0 transition-all duration-700"
-          style={{ width: `${(activeIndex - 1) * 33.33}%` }}
+          style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
         />
         {steps.map((step, index) => (
           <div key={step} className="relative z-10 flex flex-col items-center">
             <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${index + 1 <= activeIndex ? "bg-blue-600 text-white" : "bg-white border-2 border-slate-200 text-slate-300"}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-md ${index <= activeIndex ? "bg-blue-600 text-white" : "bg-white border-2 border-slate-200 text-slate-300"}`}
             >
-              {index + 1 < activeIndex ? (
+              {index < activeIndex ? (
                 "✓"
               ) : (
-                <span className="text-[8px]">{index + 1}</span>
+                <span className="text-[10px] font-bold">{index + 1}</span>
               )}
             </div>
-            <p className="absolute -bottom-5 text-[8px] font-black uppercase whitespace-nowrap opacity-60">
+            <p className="absolute -bottom-6 text-[8px] font-black uppercase whitespace-nowrap text-slate-500">
               {step}
             </p>
           </div>

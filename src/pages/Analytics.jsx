@@ -1,162 +1,3 @@
-// import React from "react";
-// import { useLocation, useNavigate } from "react-router-dom";
-// import {
-//   BarChart,
-//   Bar,
-//   XAxis,
-//   YAxis,
-//   CartesianGrid,
-//   Tooltip,
-//   ResponsiveContainer,
-//   Cell,
-//   LabelList,
-// } from "recharts";
-
-// const Analytics = () => {
-//   const location = useLocation();
-//   const navigate = useNavigate();
-
-//   // Receive data from Dashboard. If empty, provide a default structure.
-//   const { chartData } = location.state || { chartData: [] };
-
-//   return (
-//     <div className="max-w-5xl mx-auto px-4 py-12 bg-[#F8FAFC] min-h-screen font-sans">
-//       {/* Back Button */}
-//       <button
-//         onClick={() => navigate(-1)}
-//         className="mb-8 flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest hover:bg-blue-50 w-fit px-6 py-3 rounded-2xl transition-all border border-transparent hover:border-blue-100 shadow-sm bg-white active:scale-95"
-//       >
-//         ← Back to Portal
-//       </button>
-
-//       {/* Header Section */}
-//       <div className="text-center mb-12">
-//         <h2 className="text-4xl font-black text-slate-800 tracking-tighter uppercase">
-//           Grievance Insights
-//         </h2>
-//         <p className="text-slate-500 font-medium mt-2">
-//           Real-time statistical breakdown of your reported concerns
-//         </p>
-//       </div>
-
-//       {/* Main Analytics Card */}
-//       <div className="bg-white p-6 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 relative overflow-hidden">
-//         {/* Decorative Background Elements */}
-//         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/40 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-//         <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-50/40 rounded-full -ml-24 -mb-24 blur-3xl"></div>
-
-//         {/* Bar Chart Container */}
-//         <div className="w-full relative z-10 h-[450px]">
-//           <ResponsiveContainer width="100%" height="100%">
-//             <BarChart
-//               data={chartData}
-//               margin={{ top: 40, right: 30, left: 0, bottom: 20 }}
-//             >
-//               <CartesianGrid
-//                 strokeDasharray="3 3"
-//                 vertical={false}
-//                 stroke="#F1F5F9"
-//               />
-//               <XAxis
-//                 dataKey="name"
-//                 axisLine={false}
-//                 tickLine={false}
-//                 tick={{ fill: "#64748B", fontSize: 11, fontWeight: "800" }}
-//                 dy={15}
-//               />
-//               <YAxis
-//                 hide
-//                 domain={[0, (dataMax) => (dataMax < 5 ? 5 : dataMax + 2)]}
-//               />
-
-//               <Tooltip
-//                 cursor={{ fill: "#F8FAFC", radius: 15 }}
-//                 contentStyle={{
-//                   borderRadius: "20px",
-//                   border: "none",
-//                   boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-//                   padding: "15px",
-//                   fontWeight: "900",
-//                   textTransform: "uppercase",
-//                   fontSize: "12px",
-//                 }}
-//               />
-
-//               <Bar
-//                 dataKey="value"
-//                 radius={[15, 15, 15, 15]}
-//                 barSize={60}
-//                 animationDuration={1500}
-//               >
-//                 {chartData.map((entry, index) => (
-//                   <Cell
-//                     key={`cell-${index}`}
-//                     fill={entry.color}
-//                     className="hover:opacity-80 transition-opacity cursor-pointer"
-//                   />
-//                 ))}
-//                 <LabelList
-//                   dataKey="value"
-//                   position="top"
-//                   fill="#1E293B"
-//                   fontSize={18}
-//                   fontWeight="900"
-//                   offset={15}
-//                 />
-//               </Bar>
-//             </BarChart>
-//           </ResponsiveContainer>
-//         </div>
-
-//         {/* Summary Stats Cards */}
-//         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12 pt-10 border-t border-slate-50">
-//           {chartData.length > 0 ? (
-//             chartData.map((item) => (
-//               <div
-//                 key={item.name}
-//                 className="group relative bg-slate-50/50 p-6 rounded-[2rem] border border-white hover:border-slate-200 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50"
-//               >
-//                 <div
-//                   className="absolute top-4 right-4 w-3 h-3 rounded-full"
-//                   style={{ backgroundColor: item.color }}
-//                 />
-//                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-//                   {item.name}
-//                 </p>
-//                 <p className="text-4xl font-black text-slate-800 mt-2">
-//                   {item.value}
-//                 </p>
-//                 <div className="w-full h-1 bg-slate-100 mt-4 rounded-full overflow-hidden">
-//                   <div
-//                     className="h-full transition-all duration-1000"
-//                     style={{ backgroundColor: item.color, width: "100%" }}
-//                   />
-//                 </div>
-//               </div>
-//             ))
-//           ) : (
-//             <div className="col-span-full py-20 text-center">
-//               <div className="text-4xl mb-4">📊</div>
-//               <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
-//                 Analyzing data... Please wait or report an issue.
-//               </p>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       <p className="text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] mt-16">
-//         SmartGrievance Analytics Engine v2.0
-//       </p>
-//     </div>
-//   );
-// };
-
-// export default Analytics;
-
-
-
-
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -175,64 +16,83 @@ const Analytics = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // १. डिफॉल्ट स्टेटसची लिस्ट तयार केली जेणेकरून सर्व स्टेट्स दिसतील
+  // 1. Base Configuration including the new "Total" category
   const defaultStatusConfig = [
-    { name: "Pending", color: "#3B82F6", value: 0 },      // Blue
-    { name: "In Progress", color: "#F59E0B", value: 0 },  // Amber
-    { name: "Resolved", color: "#10B981", value: 0 },     // Green
-    { name: "Rejected", color: "#EF4444", value: 0 },     // Red
+    { name: "Total", color: "#1E293B", value: 0 }, // Dark Slate (New)
+    { name: "Pending", color: "#3B82F6", value: 0 }, // Blue
+    { name: "In Progress", color: "#F59E0B", value: 0 }, // Amber
+    { name: "Resolved", color: "#10B981", value: 0 }, // Green
+    { name: "Rejected", color: "#EF4444", value: 0 }, // Red
   ];
 
-  // २. डॅशबोर्डवरून आलेला डेटा रिसीव्ह करणे
+  // 2. Receive data from dashboard
   const incomingData = location.state?.chartData || [];
 
-  // ३. डेटा मर्जिंग: आलेला डेटा डिफॉल्ट स्ट्रक्चरमध्ये बसवणे (जेणेकरून 0 असेल तरी स्टेटस दिसेल)
+  // 3. Calculate Total and Merge Data
+  const totalCount = incomingData.reduce((acc, curr) => acc + curr.value, 0);
+
   const finalChartData = defaultStatusConfig.map((config) => {
-    // बॅकएंड/डॅशबोर्ड डेटा मधून मॅचिंग स्टेटस शोधणे
+    if (config.name === "Total") {
+      return { ...config, value: totalCount };
+    }
     const foundData = incomingData.find(
-      (item) => item.name.toLowerCase() === config.name.toLowerCase()
+      (item) => item.name.toLowerCase() === config.name.toLowerCase(),
     );
     return {
       ...config,
-      value: foundData ? foundData.value : 0, // डेटा नसेल तर 0 दाखवा
+      value: foundData ? foundData.value : 0,
     };
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12 bg-[#F8FAFC] min-h-screen font-sans">
+    <div className="max-w-6xl mx-auto px-4 py-12 bg-[#F8FAFC] min-h-screen font-sans">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-8 flex items-center gap-2 text-xs font-black text-blue-600 uppercase tracking-widest hover:bg-blue-50 w-fit px-6 py-3 rounded-2xl transition-all border border-transparent hover:border-blue-100 shadow-sm bg-white active:scale-95"
+        className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 w-fit px-6 py-3 rounded-2xl transition-all border border-slate-200 hover:border-blue-200 bg-white shadow-sm active:scale-95"
       >
-        ← Back to Portal
+        ← Return to Dashboard
       </button>
 
       {/* Header Section */}
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-black text-slate-800 tracking-tighter uppercase">
-          Grievance Insights
-        </h2>
-        <p className="text-slate-500 font-medium mt-2">
-          Real-time statistical breakdown of your reported concerns
-        </p>
+      <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+        <div>
+          <span className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-2 block">
+            System Intelligence
+          </span>
+          <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">
+            Data <span className="text-blue-600">Analytics</span>
+          </h2>
+          <p className="text-slate-500 font-medium mt-2">
+            Automated statistical breakdown of city grievances and resolution
+            efficiency.
+          </p>
+        </div>
+        <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm hidden md:block">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Active Database
+          </p>
+          <p className="text-sm font-bold text-slate-700">
+            Amravati Division v2.4
+          </p>
+        </div>
       </div>
 
       {/* Main Analytics Card */}
-      <div className="bg-white p-6 md:p-12 rounded-[3rem] shadow-2xl border border-slate-100 relative overflow-hidden">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/40 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-50/40 rounded-full -ml-24 -mb-24 blur-3xl"></div>
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white relative overflow-hidden">
+        {/* Abstract Background Shapes */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-50/50 rounded-full blur-3xl"></div>
 
         {/* Bar Chart Container */}
-        <div className="w-full relative z-10 h-[450px]">
+        <div className="w-full relative z-10 h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={finalChartData}
-              margin={{ top: 40, right: 30, left: 0, bottom: 20 }}
+              margin={{ top: 50, right: 30, left: 0, bottom: 20 }}
             >
               <CartesianGrid
-                strokeDasharray="3 3"
+                strokeDasharray="10 10"
                 vertical={false}
                 stroke="#F1F5F9"
               />
@@ -240,87 +100,98 @@ const Analytics = () => {
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "#64748B", fontSize: 11, fontWeight: "800" }}
-                dy={15}
+                tick={{ fill: "#94A3B8", fontSize: 10, fontWeight: "900" }}
+                dy={20}
               />
               <YAxis
                 hide
-                domain={[0, (dataMax) => (dataMax < 5 ? 5 : dataMax + 2)]}
+                domain={[0, (dataMax) => (dataMax < 5 ? 8 : dataMax + 5)]}
               />
 
               <Tooltip
-                cursor={{ fill: "#F8FAFC", radius: 15 }}
+                cursor={{ fill: "#F1F5F9", radius: 20 }}
                 contentStyle={{
-                  borderRadius: "20px",
+                  borderRadius: "24px",
                   border: "none",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                  padding: "15px",
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+                  padding: "20px",
                   fontWeight: "900",
                   textTransform: "uppercase",
-                  fontSize: "12px",
+                  fontSize: "11px",
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  backdropFilter: "blur(10px)",
                 }}
               />
 
               <Bar
                 dataKey="value"
-                radius={[15, 15, 15, 15]}
-                barSize={60}
-                animationDuration={1500}
+                radius={[20, 20, 20, 20]}
+                barSize={70}
+                animationDuration={2000}
               >
                 {finalChartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
-                    className="hover:opacity-80 transition-opacity cursor-pointer"
+                    className="hover:saturate-150 transition-all duration-500 cursor-pointer"
                   />
                 ))}
                 <LabelList
                   dataKey="value"
                   position="top"
-                  fill="#1E293B"
-                  fontSize={18}
+                  fill="#0F172A"
+                  fontSize={22}
                   fontWeight="900"
-                  offset={15}
+                  offset={20}
                 />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Summary Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12 pt-10 border-t border-slate-50">
+        {/* Dynamic Summary Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-16 pt-12 border-t border-slate-100">
           {finalChartData.map((item) => (
             <div
               key={item.name}
-              className="group relative bg-slate-50/50 p-6 rounded-[2rem] border border-white hover:border-slate-200 transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50"
+              className={`group relative p-6 rounded-[2.5rem] border transition-all duration-500 ${
+                item.name === "Total"
+                  ? "bg-slate-900 border-slate-800 text-white"
+                  : "bg-slate-50/50 border-white hover:bg-white hover:shadow-2xl hover:shadow-slate-200"
+              }`}
             >
               <div
-                className="absolute top-4 right-4 w-3 h-3 rounded-full"
-                style={{ backgroundColor: item.color }}
+                className={`absolute top-6 right-6 w-2 h-2 rounded-full ${item.name === "Total" ? "bg-blue-400" : ""}`}
+                style={
+                  item.name !== "Total" ? { backgroundColor: item.color } : {}
+                }
               />
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <p
+                className={`text-[9px] font-black uppercase tracking-[0.2em] ${item.name === "Total" ? "text-slate-400" : "text-slate-400"}`}
+              >
                 {item.name}
               </p>
-              <p className="text-4xl font-black text-slate-800 mt-2">
-                {item.value}
-              </p>
-              <div className="w-full h-1 bg-slate-100 mt-4 rounded-full overflow-hidden">
-                <div
-                  className="h-full transition-all duration-1000"
-                  style={{
-                    backgroundColor: item.color,
-                    width: item.value > 0 ? "100%" : "0%",
-                  }}
-                />
+              <div className="flex items-baseline gap-2">
+                <p
+                  className={`text-4xl font-black mt-2 ${item.name === "Total" ? "text-white" : "text-slate-800"}`}
+                >
+                  {item.value}
+                </p>
+                <span className="text-[10px] font-bold opacity-40 uppercase">
+                  Units
+                </span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <p className="text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] mt-16">
-        SmartGrievance Analytics Engine v2.0
-      </p>
+      <div className="mt-16 flex flex-col items-center gap-2">
+        <div className="h-1 w-12 bg-blue-600 rounded-full"></div>
+        <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.6em]">
+          Proprietary Analytics Engine
+        </p>
+      </div>
     </div>
   );
 };

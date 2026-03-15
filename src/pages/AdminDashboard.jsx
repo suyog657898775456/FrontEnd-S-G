@@ -6,6 +6,7 @@ import {
 } from "../services/grievanceService";
 import API from "../services/api";
 import AlertTicker from "../components/AlertTicker";
+import GrievanceMap from "../components/GrievanceMap"; // Import the map component
 import {
   BarChart,
   Bar,
@@ -48,6 +49,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeView, setActiveView] = useState("analytics"); // ✨ 'analytics' or 'heatmap'
 
   const [selectedImg, setSelectedImg] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
@@ -100,6 +102,7 @@ export default function AdminDashboard() {
     }
   };
 
+  // ✨ UPDATED: Robust Department-wise Stats Fetching
   const getActiveDeptStats = () => {
     const statsArr = [
       { name: "Pending", count: 0, color: "#2563eb" },
@@ -107,9 +110,14 @@ export default function AdminDashboard() {
       { name: "Resolved", count: 0, color: "#10b981" },
       { name: "Rejected", count: 0, color: "#ef4444" },
     ];
+
     complaints.forEach((c) => {
-      if (c.department === activeDept) {
-        const s = c.status?.toLowerCase();
+      const deptMatch =
+        c.department?.toString().toLowerCase().trim() ===
+        activeDept.toLowerCase().trim();
+
+      if (deptMatch) {
+        const s = c.status?.toLowerCase().trim();
         if (s === "pending") statsArr[0].count++;
         else if (s === "in_progress" || s === "in progress")
           statsArr[1].count++;
@@ -154,9 +162,27 @@ export default function AdminDashboard() {
       <AlertTicker complaints={complaints} />
 
       <div className="space-y-10 p-6 relative">
-        <h1 className="text-2xl font-black text-gray-800 tracking-tight uppercase">
-          SUPER ADMIN DASHBOARD
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-black text-gray-800 tracking-tight uppercase">
+            SUPER ADMIN DASHBOARD
+          </h1>
+
+          {/* ✨ Modern Toggle for Heatmap vs Analytics */}
+          <div className="bg-slate-200/50 p-1.5 rounded-2xl flex gap-1">
+            <button
+              onClick={() => setActiveView("analytics")}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "analytics" ? "bg-white shadow-lg text-blue-600" : "text-slate-500"}`}
+            >
+              📊 Stats View
+            </button>
+            <button
+              onClick={() => setActiveView("heatmap")}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "heatmap" ? "bg-white shadow-lg text-blue-600" : "text-slate-500"}`}
+            >
+              🌍 Heatmap View
+            </button>
+          </div>
+        </div>
 
         {/* Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -186,57 +212,90 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* Graph Section */}
-        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <span>📉</span> Department Insights
-              </h2>
-              <p className="text-lg font-bold text-slate-700">
-                Status breakdown for {activeDept}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {departments.map((dept) => (
-                <button
-                  key={dept}
-                  onClick={() => setActiveDept(dept)}
-                  className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${activeDept === dept ? "bg-blue-600 text-white shadow-lg" : "bg-white text-gray-400"}`}
-                >
-                  {dept}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{ width: "100%", height: "350px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getActiveDeptStats()}>
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  fontSize={12}
-                  fontWeight="bold"
-                />
-                <YAxis hide />
-                <Tooltip
-                  cursor={{ fill: "#f8fafc" }}
-                  contentStyle={{ borderRadius: "15px", border: "none" }}
-                />
-                <Bar dataKey="count" radius={[12, 12, 12, 12]} barSize={60}>
-                  {getActiveDeptStats().map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+        {/* Dynamic Display Area */}
+        <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-slate-200/40">
+          {activeView === "analytics" ? (
+            <>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                <div>
+                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <span>📉</span> Department Insights
+                  </h2>
+                  <p className="text-lg font-bold text-slate-700">
+                    Status breakdown for {activeDept}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {departments.map((dept) => (
+                    <button
+                      key={dept}
+                      onClick={() => setActiveDept(dept)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${activeDept === dept ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-white text-gray-400 hover:border-blue-100"}`}
+                    >
+                      {dept}
+                    </button>
                   ))}
-                  <LabelList
-                    dataKey="count"
-                    position="top"
-                    style={{ fill: "#64748b", fontWeight: "bold" }}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+                </div>
+              </div>
+              <div style={{ width: "100%", height: "350px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={getActiveDeptStats()}>
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      fontSize={12}
+                      fontWeight="bold"
+                    />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: "#f8fafc" }}
+                      contentStyle={{
+                        borderRadius: "15px",
+                        border: "none",
+                        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[12, 12, 12, 12]} barSize={60}>
+                      {getActiveDeptStats().map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                      <LabelList
+                        dataKey="count"
+                        position="top"
+                        style={{
+                          fill: "#64748b",
+                          fontWeight: "900",
+                          fontSize: "14px",
+                        }}
+                        offset={10}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <div className="mb-6 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span>🌍</span> Geo-Spatial Analysis
+                  </h2>
+                  <p className="text-lg font-bold text-slate-800">
+                    Visualizing Complaint Hotspots
+                  </p>
+                </div>
+                <div className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase">
+                  Live Monitoring Active
+                </div>
+              </div>
+              <GrievanceMap
+                complaints={complaints}
+                onMarkerClick={(c) => setViewDetails(c)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Management Table */}
@@ -278,7 +337,7 @@ export default function AdminDashboard() {
                             ? "bg-orange-100 text-orange-700 border-orange-200"
                             : c.priority === "MEDIUM"
                               ? "bg-blue-100 text-blue-700 border-blue-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200" // Low or Default
+                              : "bg-slate-100 text-slate-600 border-slate-200"
                       }`}
                     >
                       {c.priority || "LOW"}
