@@ -16,24 +16,26 @@ const Analytics = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 1. Base Configuration including the new "Total" category
+  // 1. Base Configuration
   const defaultStatusConfig = [
-    { name: "Total", color: "#1E293B", value: 0 }, // Dark Slate (New)
-    { name: "Pending", color: "#3B82F6", value: 0 }, // Blue
-    { name: "In Progress", color: "#F59E0B", value: 0 }, // Amber
-    { name: "Resolved", color: "#10B981", value: 0 }, // Green
-    { name: "Rejected", color: "#EF4444", value: 0 }, // Red
+    { name: "Total", color: "#1E293B", value: 0 },
+    { name: "Pending", color: "#3B82F6", value: 0 },
+    { name: "In Progress", color: "#F59E0B", value: 0 },
+    { name: "Resolved", color: "#10B981", value: 0 },
+    { name: "Rejected", color: "#EF4444", value: 0 },
   ];
 
-  // 2. Receive data from dashboard
+  // 2. Receive exact data from dashboard state
   const incomingData = location.state?.chartData || [];
 
-  // 3. Calculate Total and Merge Data
-  const totalCount = incomingData.reduce((acc, curr) => acc + curr.value, 0);
+  // ✨ FIX: Dashboard wala exact Total pakdo, calculations skip karo agar data available ho
+  const dashboardTotal =
+    location.state?.overallTotal ||
+    incomingData.reduce((acc, curr) => acc + curr.value, 0);
 
   const finalChartData = defaultStatusConfig.map((config) => {
     if (config.name === "Total") {
-      return { ...config, value: totalCount };
+      return { ...config, value: dashboardTotal };
     }
     const foundData = incomingData.find(
       (item) => item.name.toLowerCase() === config.name.toLowerCase(),
@@ -58,33 +60,31 @@ const Analytics = () => {
       <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
         <div>
           <span className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-2 block">
-            System Intelligence
+            Personal Intelligence
           </span>
           <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">
-            Data <span className="text-blue-600">Analytics</span>
+            Your <span className="text-blue-600">Analytics</span>
           </h2>
           <p className="text-slate-500 font-medium mt-2">
-            Automated statistical breakdown of city grievances and resolution
-            efficiency.
+            Automated statistical breakdown of your grievances and resolution
+            progress.
           </p>
         </div>
         <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm hidden md:block">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Active Database
+            Verified Account
           </p>
           <p className="text-sm font-bold text-slate-700">
-            Amravati Division v2.4
+            Citizen Dashboard v2.4
           </p>
         </div>
       </div>
 
       {/* Main Analytics Card */}
       <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white relative overflow-hidden">
-        {/* Abstract Background Shapes */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-50/50 rounded-full blur-3xl"></div>
 
-        {/* Bar Chart Container */}
         <div className="w-full relative z-10 h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -189,7 +189,7 @@ const Analytics = () => {
       <div className="mt-16 flex flex-col items-center gap-2">
         <div className="h-1 w-12 bg-blue-600 rounded-full"></div>
         <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.6em]">
-          Proprietary Analytics Engine
+          Dynamic Service Sync Active
         </p>
       </div>
     </div>

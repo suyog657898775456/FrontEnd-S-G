@@ -6,7 +6,7 @@ import {
 } from "../services/grievanceService";
 import API from "../services/api";
 import AlertTicker from "../components/AlertTicker";
-import GrievanceMap from "../components/GrievanceMap"; // Import the map component
+import GrievanceMap from "../components/GrievanceMap"; 
 import {
   BarChart,
   Bar,
@@ -60,6 +60,14 @@ export default function AdminDashboard() {
 
   const [activeDept, setActiveDept] = useState("Road");
   const departments = ["Road", "Light", "Water", "Sewage", "Garbage"];
+
+  // ✨ Helper to fix Image Paths properly
+  const getFullImgUrl = (path) => {
+    if (!path)
+      return "https://via.placeholder.com/800x600?text=No+Image+Available";
+    if (path.startsWith("http")) return path;
+    return `http://127.0.0.1:8000${path}`;
+  };
 
   useEffect(() => {
     loadData();
@@ -422,43 +430,25 @@ export default function AdminDashboard() {
                 </div>
                 <div className="space-y-6">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
-                    Visual Evidence
+                    Reported Evidence
                   </label>
-                  {viewDetails.status === "resolved" ? (
-                    <div className="space-y-4">
-                      <div className="relative group">
-                        <span className="absolute top-2 left-2 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded">
-                          BEFORE
-                        </span>
-                        <img
-                          src={`http://127.0.0.1:8000${viewDetails.image}`}
-                          className="w-full h-32 object-cover rounded-2xl border shadow-md"
-                          alt="Before"
-                        />
-                      </div>
-                      <div className="relative group">
-                        <span className="absolute top-2 left-2 z-10 bg-emerald-600 text-white text-[8px] font-black px-2 py-0.5 rounded">
-                          AFTER
-                        </span>
-                        <img
-                          src={`http://127.0.0.1:8000${viewDetails.after_image}`}
-                          className="w-full h-32 object-cover rounded-2xl border shadow-md"
-                          alt="After"
-                        />
-                      </div>
-                    </div>
-                  ) : (
+
+                  {/* ✨ Fetching image properly from backend with full width structure */}
+                  <div className="w-full aspect-video rounded-[2rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                     <img
-                      src={`http://127.0.0.1:8000${viewDetails.image}`}
-                      className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-xl cursor-zoom-in"
+                      src={getFullImgUrl(viewDetails.image)}
+                      className="w-full h-full object-contain cursor-zoom-in"
                       alt="Initial Evidence"
                       onClick={() =>
-                        setSelectedImg(
-                          `http://127.0.0.1:8000${viewDetails.image}`,
-                        )
+                        setSelectedImg(getFullImgUrl(viewDetails.image))
                       }
+                      onError={(e) => {
+                        e.target.src =
+                          "https://via.placeholder.com/800x600?text=Image+Not+Found";
+                      }}
                     />
-                  )}
+                  </div>
+
                   <a
                     href={viewDetails.formatted_address}
                     target="_blank"
