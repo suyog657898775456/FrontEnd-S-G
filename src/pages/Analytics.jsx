@@ -1,5 +1,6 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { fetchAllComplaints } from "../services/grievanceService"; // Direct fetch service
 import {
   BarChart,
   Bar,
@@ -13,42 +14,68 @@ import {
 } from "recharts";
 
 const Analytics = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState([]);
 
-  // 1. Base Configuration
-  const defaultStatusConfig = [
-    { name: "Total", color: "#1E293B", value: 0 },
-    { name: "Pending", color: "#3B82F6", value: 0 },
-    { name: "In Progress", color: "#F59E0B", value: 0 },
-    { name: "Resolved", color: "#10B981", value: 0 },
-    { name: "Rejected", color: "#EF4444", value: 0 },
+  // Base Configuration
+  const statusConfig = [
+    { name: "Total", color: "#1E293B" },
+    { name: "Pending", color: "#3B82F6" },
+    { name: "In Progress", color: "#F59E0B" },
+    { name: "Resolved", color: "#10B981" },
+    { name: "Rejected", color: "#EF4444" },
   ];
 
-  // 2. Receive exact data from dashboard state
-  const incomingData = location.state?.chartData || [];
+  useEffect(() => {
+    const loadUserStats = async () => {
+      try {
+        // ✨ Fetching all complaints from backend
+        const data = await fetchAllComplaints();
+        const validData = Array.isArray(data) ? data : [];
 
-  // ✨ FIX: Dashboard wala exact Total pakdo, calculations skip karo agar data available ho
-  const dashboardTotal =
-    location.state?.overallTotal ||
-    incomingData.reduce((acc, curr) => acc + curr.value, 0);
+        // Logic: Calculate stats for this user only
+        const stats = {
+          Total: validData.length,
+          Pending: validData.filter(
+            (c) => c.status?.toLowerCase() === "pending",
+          ).length,
+          "In Progress": validData.filter((c) =>
+            ["in_progress", "in progress"].includes(c.status?.toLowerCase()),
+          ).length,
+          Resolved: validData.filter(
+            (c) => c.status?.toLowerCase() === "resolved",
+          ).length,
+          Rejected: validData.filter(
+            (c) => c.status?.toLowerCase() === "rejected",
+          ).length,
+        };
 
-  const finalChartData = defaultStatusConfig.map((config) => {
-    if (config.name === "Total") {
-      return { ...config, value: dashboardTotal };
-    }
-    const foundData = incomingData.find(
-      (item) => item.name.toLowerCase() === config.name.toLowerCase(),
-    );
-    return {
-      ...config,
-      value: foundData ? foundData.value : 0,
+        const finalData = statusConfig.map((config) => ({
+          ...config,
+          value: stats[config.name] || 0,
+        }));
+
+        setChartData(finalData);
+      } catch (error) {
+        console.error("Analytics Fetch Error:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-  });
+
+    loadUserStats();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="p-20 text-center font-black text-blue-600 animate-pulse text-xl tracking-widest uppercase">
+        Analyzing Your Records...
+      </div>
+    );
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12 bg-[#F8FAFC] min-h-screen font-sans">
-      {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
         className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 w-fit px-6 py-3 rounded-2xl transition-all border border-slate-200 hover:border-blue-200 bg-white shadow-sm active:scale-95"
@@ -56,7 +83,6 @@ const Analytics = () => {
         ← Return to Dashboard
       </button>
 
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
         <div>
           <span className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-2 block">
@@ -66,29 +92,18 @@ const Analytics = () => {
             Your <span className="text-blue-600">Analytics</span>
           </h2>
           <p className="text-slate-500 font-medium mt-2">
-            Automated statistical breakdown of your grievances and resolution
-            progress.
-          </p>
-        </div>
-        <div className="bg-white border border-slate-100 p-4 rounded-3xl shadow-sm hidden md:block">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Verified Account
-          </p>
-          <p className="text-sm font-bold text-slate-700">
-            Citizen Dashboard v2.4
+            Verified statistical breakdown of your personal grievance history.
           </p>
         </div>
       </div>
 
-      {/* Main Analytics Card */}
       <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-50/50 rounded-full blur-3xl"></div>
 
         <div className="w-full relative z-10 h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={finalChartData}
+              data={chartData}
               margin={{ top: 50, right: 30, left: 0, bottom: 20 }}
             >
               <CartesianGrid
@@ -103,11 +118,7 @@ const Analytics = () => {
                 tick={{ fill: "#94A3B8", fontSize: 10, fontWeight: "900" }}
                 dy={20}
               />
-              <YAxis
-                hide
-                domain={[0, (dataMax) => (dataMax < 5 ? 8 : dataMax + 5)]}
-              />
-
+              <YAxis hide />
               <Tooltip
                 cursor={{ fill: "#F1F5F9", radius: 20 }}
                 contentStyle={{
@@ -117,24 +128,16 @@ const Analytics = () => {
                   padding: "20px",
                   fontWeight: "900",
                   textTransform: "uppercase",
-                  fontSize: "11px",
-                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                  backdropFilter: "blur(10px)",
                 }}
               />
-
               <Bar
                 dataKey="value"
                 radius={[20, 20, 20, 20]}
                 barSize={70}
                 animationDuration={2000}
               >
-                {finalChartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    className="hover:saturate-150 transition-all duration-500 cursor-pointer"
-                  />
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
                 <LabelList
                   dataKey="value"
@@ -149,31 +152,18 @@ const Analytics = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Dynamic Summary Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-16 pt-12 border-t border-slate-100">
-          {finalChartData.map((item) => (
+          {chartData.map((item) => (
             <div
               key={item.name}
-              className={`group relative p-6 rounded-[2.5rem] border transition-all duration-500 ${
-                item.name === "Total"
-                  ? "bg-slate-900 border-slate-800 text-white"
-                  : "bg-slate-50/50 border-white hover:bg-white hover:shadow-2xl hover:shadow-slate-200"
-              }`}
+              className={`group relative p-6 rounded-[2.5rem] border transition-all duration-500 ${item.name === "Total" ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50/50 border-white hover:bg-white hover:shadow-2xl"}`}
             >
-              <div
-                className={`absolute top-6 right-6 w-2 h-2 rounded-full ${item.name === "Total" ? "bg-blue-400" : ""}`}
-                style={
-                  item.name !== "Total" ? { backgroundColor: item.color } : {}
-                }
-              />
-              <p
-                className={`text-[9px] font-black uppercase tracking-[0.2em] ${item.name === "Total" ? "text-slate-400" : "text-slate-400"}`}
-              >
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-2">
                 {item.name}
               </p>
               <div className="flex items-baseline gap-2">
                 <p
-                  className={`text-4xl font-black mt-2 ${item.name === "Total" ? "text-white" : "text-slate-800"}`}
+                  className={`text-4xl font-black ${item.name === "Total" ? "text-white" : "text-slate-800"}`}
                 >
                   {item.value}
                 </p>
@@ -189,7 +179,7 @@ const Analytics = () => {
       <div className="mt-16 flex flex-col items-center gap-2">
         <div className="h-1 w-12 bg-blue-600 rounded-full"></div>
         <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.6em]">
-          Dynamic Service Sync Active
+          User-Specific Intelligence Data
         </p>
       </div>
     </div>

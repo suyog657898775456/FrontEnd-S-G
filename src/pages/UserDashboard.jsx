@@ -106,7 +106,7 @@ const UserDashboard = () => {
               color="blue"
             />
             <StatCard
-              title="In Progress"
+              title="Pending"
               value={stats.pending}
               icon="⏳"
               color="amber"
