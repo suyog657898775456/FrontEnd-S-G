@@ -84,3 +84,9 @@ export const resolveGrievanceWithPhoto = async (id, photoFile) => {
     throw error;
   }
 };
+
+export const deleteGrievance = async (id) => {
+  // Backend code ke hisaab se ye endpoint hai: grievances/admin/${id}/
+  const response = await API.delete(`grievances/admin/${id}/`);
+  return response.data;
+};

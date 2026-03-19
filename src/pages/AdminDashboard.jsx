@@ -5,8 +5,9 @@ import {
   fetchAllFeedbacks,
 } from "../services/grievanceService";
 import API from "../services/api";
-import AlertTicker from "../components/AlertTicker";
 import GrievanceMap from "../components/GrievanceMap";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   BarChart,
   Bar,
@@ -59,8 +60,12 @@ export default function AdminDashboard() {
   const [resNote, setResNote] = useState("");
   const [rejectReason, setRejectReason] = useState("");
 
-  const [activeDept, setActiveDept] = useState("Road");
-  const departments = ["Road", "Light", "Water", "Sewage", "Garbage"];
+  const [activeDept, setActiveDept] = useState("All"); // 1. Default to All
+  const departments = ["All", "Road", "Light", "Water", "Sewage", "Garbage"];
+
+  // PDF Export States
+  const [reportDept, setReportDept] = useState("All");
+  const [reportDays, setReportDays] = useState("7");
 
   const getFullImgUrl = (path) => {
     if (!path)
@@ -86,6 +91,20 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generatePDFReport = async () => {
+    const reportElement = document.getElementById("admin-report-area");
+    if (!reportElement) return;
+
+    const canvas = await html2canvas(reportElement, { scale: 2 });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    pdf.save(`MuniReport_${reportDept}_${reportDays}days.pdf`);
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
@@ -130,14 +149,28 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("PERMANENT DELETE: Are you sure?")) return;
+    if (
+      !window.confirm(
+        "PERMANENT DELETE: Are you sure you want to remove this record?",
+      )
+    )
+      return;
+
     try {
-      await API.delete(`grievances/officer/${id}/`);
-      alert("Complaint removed from database.");
+      // ✨ FIX: Changed endpoint from 'officer' to 'admin' to fix 403 Forbidden error
+      await API.delete(`grievances/admin/${id}/`);
+
+      alert("System: Grievance record deleted successfully.");
+
+      // UI refresh karne ke liye data load karein aur modal band karein
       loadData();
       setViewDetails(null);
     } catch (error) {
-      alert("Delete failed.");
+      console.error("Delete Error:", error.response?.data);
+      const errorMsg =
+        error.response?.data?.detail ||
+        "You do not have permission to delete this.";
+      alert(`Delete Failed: ${errorMsg}`);
     }
   };
 
@@ -150,7 +183,11 @@ export default function AdminDashboard() {
     ];
     complaints.forEach((c) => {
       const depts = Array.isArray(c.department) ? c.department : [c.department];
-      if (depts.some((d) => d?.toLowerCase() === activeDept.toLowerCase())) {
+      // Updated Logic for All tab
+      if (
+        activeDept === "All" ||
+        depts.some((d) => d?.toLowerCase() === activeDept.toLowerCase())
+      ) {
         const s = c.status?.toLowerCase();
         if (s === "pending") statsArr[0].count++;
         else if (s === "in_progress" || s === "in progress")
@@ -173,6 +210,7 @@ export default function AdminDashboard() {
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       c.id.toString().includes(searchQuery) ||
+      searchQuery === "" ||
       searchableDepts.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -186,9 +224,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans">
-      <AlertTicker complaints={complaints} />
-
-      <div className="space-y-8 p-6 relative max-w-[1600px] mx-auto">
+      <div className="space-y-8 p-6 relative max-w-[1600px] mx-auto pb-32">
         <div className="flex justify-between items-center bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
           <h1 className="text-2xl font-black text-gray-800 tracking-tight uppercase">
             SUPER ADMIN <span className="text-blue-600">DASHBOARD</span>
@@ -247,7 +283,46 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* ✨ Modern Search & Filter Bar */}
+        {/* 3. New PDF Report Export Section */}
+        <div className="bg-blue-600 p-8 rounded-[3rem] text-white shadow-2xl shadow-blue-200 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h3 className="text-xl font-black uppercase italic">
+              Administrative Report Center
+            </h3>
+            <p className="text-blue-100 text-sm font-medium">
+              Export categorized grievances for official auditing.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4 bg-white/10 p-3 rounded-3xl backdrop-blur-md">
+            <select
+              className="bg-white text-slate-800 px-4 py-2 rounded-xl text-xs font-bold outline-none"
+              value={reportDept}
+              onChange={(e) => setReportDept(e.target.value)}
+            >
+              {departments.map((d) => (
+                <option key={d} value={d}>
+                  {d} Dept
+                </option>
+              ))}
+            </select>
+            <select
+              className="bg-white text-slate-800 px-4 py-2 rounded-xl text-xs font-bold outline-none"
+              value={reportDays}
+              onChange={(e) => setReportDays(e.target.value)}
+            >
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days (1 Month)</option>
+            </select>
+            <button
+              onClick={generatePDFReport}
+              className="bg-yellow-400 text-slate-900 px-6 py-2 rounded-xl text-xs font-black uppercase hover:bg-yellow-300 transition-all"
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+
+        {/* Search & Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100">
           <div className="relative flex-1">
             <span className="absolute left-5 top-1/2 -translate-y-1/2 opacity-30">
@@ -298,7 +373,16 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               </div>
-              <div style={{ width: "100%", height: "350px" }}>
+              <div
+                id="admin-report-area"
+                style={{
+                  width: "100%",
+                  height: "350px",
+                  background: "white",
+                  padding: "20px",
+                  borderRadius: "20px",
+                }}
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={getActiveDeptStats()}>
                     <XAxis
@@ -398,7 +482,7 @@ export default function AdminDashboard() {
                       {c.status?.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right font-black text-blue-400 text-[10px] uppercase tracking-tighter group-hover:text-blue-600">
+                  <td className="px-8 py-6 text-right font-black text-blue-400 text-[10px] uppercase group-hover:text-blue-600">
                     Analyze & Manage →
                   </td>
                 </tr>
@@ -407,7 +491,7 @@ export default function AdminDashboard() {
           </table>
         </div>
 
-        {/* ✨ Professional Management Modal */}
+        {/* Professional Management Modal */}
         {viewDetails && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col my-auto">
@@ -429,7 +513,6 @@ export default function AdminDashboard() {
               </div>
 
               <div className="p-8 grid grid-cols-1 lg:grid-cols-5 gap-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                {/* Left Side: Logic & Actions */}
                 <div className="lg:col-span-3 space-y-8">
                   <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">
@@ -439,8 +522,6 @@ export default function AdminDashboard() {
                       "{viewDetails.description}"
                     </p>
                   </div>
-
-                  {/* Operational Controls */}
                   <div className="space-y-4">
                     <h4 className="text-[11px] font-black text-slate-800 uppercase flex items-center gap-2">
                       <span>⚡</span> Rapid Operations
@@ -462,8 +543,6 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   </div>
-
-                  {/* Resolution Input Area */}
                   {viewDetails.status !== "resolved" && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 space-y-4">
@@ -507,71 +586,8 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   )}
-
-                  {/* Department Multi-Task Proof View */}
-                  <div className="space-y-4 pt-4">
-                    <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest">
-                      Inter-Departmental Proofs
-                    </h4>
-                    {viewDetails.department_tasks?.length > 0 ? (
-                      viewDetails.department_tasks.map((task, idx) => (
-                        <div
-                          key={idx}
-                          className="p-5 bg-white rounded-3xl border border-slate-100 shadow-sm"
-                        >
-                          <div className="flex justify-between items-center mb-4">
-                            <span className="text-[11px] font-black uppercase text-slate-800">
-                              {task.department} Division
-                            </span>
-                            <span
-                              className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${task.status === "resolved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}
-                            >
-                              {task.status}
-                            </span>
-                          </div>
-                          {task.status === "resolved" && (
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <p className="text-[8px] font-black text-slate-400 uppercase">
-                                  Before
-                                </p>
-                                <img
-                                  src={getFullImgUrl(task.before_image)}
-                                  className="h-28 w-full object-cover rounded-2xl cursor-pointer hover:opacity-80 border-2 border-slate-50"
-                                  onClick={() =>
-                                    setSelectedImg(
-                                      getFullImgUrl(task.before_image),
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-[8px] font-black text-slate-400 uppercase">
-                                  After
-                                </p>
-                                <img
-                                  src={getFullImgUrl(task.after_image)}
-                                  className="h-28 w-full object-cover rounded-2xl cursor-pointer hover:opacity-80 border-2 border-slate-50"
-                                  onClick={() =>
-                                    setSelectedImg(
-                                      getFullImgUrl(task.after_image),
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-[10px] text-slate-400 italic">
-                        No departmental sub-tasks generated for this case.
-                      </p>
-                    )}
-                  </div>
                 </div>
 
-                {/* Right Side: Primary Evidence & Geo */}
                 <div className="lg:col-span-2 space-y-8">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
@@ -585,14 +601,7 @@ export default function AdminDashboard() {
                         onClick={() =>
                           setSelectedImg(getFullImgUrl(viewDetails.image))
                         }
-                        onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/800x600?text=Data+Image+Corrupt";
-                        }}
                       />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none text-white font-black text-xs uppercase tracking-widest">
-                        Click to Expand
-                      </div>
                     </div>
                   </div>
                   <a

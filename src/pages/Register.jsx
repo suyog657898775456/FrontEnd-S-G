@@ -12,7 +12,10 @@ const Register = () => {
     mobile: "",
     password: "",
   });
+
   const [error, setError] = useState("");
+  // ✨ FIX: Defined showPassword state to prevent "ReferenceError"
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -65,7 +68,7 @@ const Register = () => {
 
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           {error && (
-            <p className="text-red-500 text-sm text-center font-medium">
+            <p className="text-red-500 text-sm text-center font-medium bg-red-50 py-2 rounded-lg border border-red-100">
               {error}
             </p>
           )}
@@ -76,7 +79,7 @@ const Register = () => {
               type="text"
               placeholder="First Name"
               required
-              className="border p-3 rounded-lg"
+              className="border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               onChange={handleChange}
             />
             <input
@@ -84,7 +87,7 @@ const Register = () => {
               type="text"
               placeholder="Last Name"
               required
-              className="border p-3 rounded-lg"
+              className="border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               onChange={handleChange}
             />
           </div>
@@ -94,17 +97,16 @@ const Register = () => {
             type="text"
             placeholder="Username"
             required
-            className="w-full border p-3 rounded-lg"
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             onChange={handleChange}
           />
 
-          {/* NEW EMAIL FIELD */}
           <input
             name="email"
             type="email"
             placeholder="Email Address"
             required
-            className="w-full border p-3 rounded-lg"
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             onChange={handleChange}
           />
 
@@ -113,31 +115,44 @@ const Register = () => {
             type="text"
             placeholder="Mobile (e.g. 9876543210)"
             required
-            className="w-full border p-3 rounded-lg"
+            className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             onChange={handleChange}
           />
 
-          <input
-            name="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="Password (must include @, #, etc.)"
-            required
-            className="w-full border p-3 rounded-lg"
-            onChange={handleChange}
-          />
+          {/* Password Field with Show/Hide Logic */}
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password (must include @, #, etc.)"
+              required
+              className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={handleChange}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? "👁️‍🗨️" : "👁️"}
+            </button>
+          </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+            className="w-full py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
           >
-            Register
+            Create My Account
           </button>
         </form>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 border-t pt-4">
           <p className="text-sm text-gray-600">
             Already have an account?{" "}
-            <Link to="/login" className="text-blue-600 font-medium">
+            <Link
+              to="/login"
+              className="text-blue-600 font-bold hover:underline"
+            >
               Sign in
             </Link>
           </p>

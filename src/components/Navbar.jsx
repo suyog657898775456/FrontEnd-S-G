@@ -298,113 +298,128 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[999] md:hidden">
+        <div className="fixed inset-0 z-[9999] md:hidden">
+          {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-md transition-opacity duration-300"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
             onClick={() => setIsMobileMenuOpen(false)}
-          ></div>
+          />
 
-          <div className="fixed right-0 top-0 bottom-0 h-full w-[300px] bg-white shadow-[-15px_0_40px_rgba(0,0,0,0.2)] flex flex-col animate-in slide-in-from-right duration-500 ease-out">
-            <div className="px-6 py-8 flex justify-between items-center border-b border-slate-100 bg-white">
-              <div>
-                <span className="block text-[10px] font-black text-blue-700 uppercase tracking-widest">
-                  Portal Menu
-                </span>
-                <h2 className="text-xl font-black text-[#1E293B] tracking-tight">
-                  Navigation
-                </h2>
+          {/* Drawer */}
+          <div className="fixed right-0 top-0 h-full w-[300px] bg-white shadow-xl transform transition-transform duration-300 ease-in-out translate-x-0">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="px-6 py-8 flex justify-between items-center border-b border-slate-100 bg-white">
+                <div>
+                  <span className="block text-[10px] font-black text-blue-700 uppercase tracking-widest">
+                    Portal Menu
+                  </span>
+                  <h2 className="text-xl font-black text-[#1E293B] tracking-tight">
+                    Navigation
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-xl text-[#1E293B] hover:text-red-600 hover:bg-red-50 transition-all"
+                >
+                  <span className="text-2xl leading-none">✕</span>
+                </button>
               </div>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-xl text-[#1E293B] hover:text-red-600 hover:bg-red-50 transition-all"
-              >
-                <span className="text-2xl leading-none">✕</span>
-              </button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
-              {user ? (
-                <div className="flex flex-col h-full">
-                  <div className="p-6 bg-[#1E293B] rounded-[2rem] mb-6 shadow-xl shadow-blue-900/10">
-                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">
-                      Authorized Session
-                    </p>
-                    <p className="font-black text-white text-lg leading-tight truncate">
-                      {user.first_name} {user.last_name}
-                    </p>
-                    <p className="text-slate-400 text-xs mt-1 truncate font-medium">
-                      {user.email}
-                    </p>
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto">
+                {user ? (
+                  <div className="p-6">
+                    {/* User Info */}
+                    <div className="p-6 bg-[#1E293B] rounded-[2rem] mb-6 shadow-xl shadow-blue-900/10">
+                      <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">
+                        Authorized Session
+                      </p>
+                      <p className="font-black text-white text-lg leading-tight truncate">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <p className="text-slate-400 text-xs mt-1 truncate font-medium">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    {/* Navigation Links */}
+                    <nav className="flex flex-col gap-1">
+                      <MobileNavLink
+                        to={getHomeLink()}
+                        icon="📊"
+                        label="Dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      />
+
+                      {user.role === "CITIZEN" && (
+                        <>
+                          <MobileNavLink
+                            to="/complaint"
+                            icon="✍️"
+                            label="Raise Complaint"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          />
+                          <MobileNavLink
+                            to="/my-complaints"
+                            icon="📜"
+                            label="My History"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          />
+                        </>
+                      )}
+
+                      {(user.role === "ADMIN" || user.role === "OFFICER") && (
+                        <div className="mt-4 pt-4 border-t border-slate-100">
+                          <MobileNavLink
+                            to="/view-feedbacks"
+                            icon="📈"
+                            label="Officer Panel"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </nav>
+
+                    {/* Logout Button */}
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-4 px-4 py-4 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-50 rounded-2xl transition-all"
+                      >
+                        <span>🚪</span> Log Out System
+                      </button>
+                    </div>
                   </div>
-
-                  <nav className="flex flex-col gap-1">
-                    <MobileNavLink
-                      to={getHomeLink()}
-                      icon="📊"
-                      label="Dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    />
-
-                    {user.role === "CITIZEN" && (
-                      <>
-                        <MobileNavLink
-                          to="/complaint"
-                          icon="✍️"
-                          label="Raise Complaint"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        />
-                        <MobileNavLink
-                          to="/my-complaints"
-                          icon="📜"
-                          label="My History"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        />
-                      </>
-                    )}
-
-                    {(user.role === "ADMIN" || user.role === "OFFICER") && (
-                      <div className="mt-4 pt-4 border-t border-slate-100">
-                        <MobileNavLink
-                          to="/view-feedbacks"
-                          icon="📈"
-                          label="Officer Panel"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        />
-                      </div>
-                    )}
-                  </nav>
-
-                  <div className="mt-auto pt-6 border-t border-slate-100">
-                    <button
-                      onClick={logout}
-                      className="w-full flex items-center gap-4 px-4 py-4 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-50 rounded-2xl transition-all"
-                    >
-                      <span>🚪</span> Log Out System
-                    </button>
+                ) : (
+                  <div className="p-6">
+                    {/* Auth Links */}
+                    <div className="flex flex-col gap-4">
+                      <Link
+                        to="/login"
+                        className="py-4 text-center border-2 border-slate-100 rounded-2xl font-black text-[#1E293B] text-sm uppercase tracking-widest transition-all hover:bg-slate-50"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="py-4 text-center bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-100 text-sm uppercase tracking-widest transition-all hover:bg-blue-800"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        Register
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4 pt-4">
-                  <Link
-                    to="/login"
-                    className="py-4 text-center border-2 border-slate-100 rounded-2xl font-black text-[#1E293B] text-sm uppercase tracking-widest transition-all"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-4 text-center bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-100 text-sm uppercase tracking-widest transition-all"
-                  >
-                    Register
-                  </Link>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="p-8 text-center bg-slate-50/50">
-              <p className="text-[9px] font-black text-[#1E293B]/40 uppercase tracking-[0.4em]">
-                Muni-Portal • 2026
-              </p>
+              {/* Footer */}
+              <div className="p-8 text-center bg-slate-50/50 border-t border-slate-100">
+                <p className="text-[9px] font-black text-[#1E293B]/40 uppercase tracking-[0.4em]">
+                  Muni-Portal • 2026
+                </p>
+              </div>
             </div>
           </div>
         </div>

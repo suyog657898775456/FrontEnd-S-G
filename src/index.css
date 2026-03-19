@@ -2,7 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 1. Global Styles */
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  top: 0px !important;
+  position: static !important;
+  transition: all 0.3s ease-in-out;
+}
+
+/* 2. Google Translate UI Cleanup (Hiding Bars, Icons & Tooltips) */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-gadget-icon,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+iframe.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Hide the main Google widget container but keep the functionality active */
+#google_translate_element,
+.skiptranslate,
+.goog-te-gadget {
+  display: none !important;
+  font-size: 0 !important;
+}
+
+/* 3. Text & Interaction Fixes */
+/* Prevent text highlighting/yellow background when Google translates */
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Ensure the combo box (hidden dropdown) remains accessible to JS but invisible to users */
+.goog-te-combo {
+  opacity: 0 !important;
+  position: absolute !important;
+  z-index: -1 !important;
+}
+
+/* 4. Custom Scrollbar for Dashboard (Optional - for Modern UI) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
