@@ -5,6 +5,7 @@ import {
   updateComplaintStatus,
 } from "../services/grievanceService";
 import API from "../services/api";
+import GrievanceMap from "../components/GrievanceMap"; // Added Map Component
 
 const MunicipalDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -13,6 +14,7 @@ const MunicipalDashboard = () => {
   const [selectedImg, setSelectedImg] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
+  const [activeView, setActiveView] = useState("list"); // 'list' or 'map'
 
   // ✨ Resolution States
   const [afterImage, setAfterImage] = useState(null);
@@ -37,15 +39,16 @@ const MunicipalDashboard = () => {
     }
   };
 
-  // ✨ Helper to handle nested image paths
+  // ✨ FIXED Helper: Handle nested image paths properly
   const getFullImgUrl = (path) => {
     if (!path)
       return "https://via.placeholder.com/800x600?text=No+Image+Available";
     if (path.startsWith("http")) return path;
-    return `http://127.0.0.1:8000${path}`;
+    // Prefix backend host to relative paths
+    return `http://127.0.0.1:8000${path.startsWith("/") ? "" : "/"}${path}`;
   };
 
-  // ✅ Status-wise Filtering Logic
+  // ✅ Status-wise Filtering Logic (Including Rejected)
   const filteredComplaints = useMemo(() => {
     let filtered = complaints;
     if (statusFilter !== "All") {
@@ -70,7 +73,6 @@ const MunicipalDashboard = () => {
       .length,
   };
 
-  // ✅ Officer Update Proof Logic (Updated for specific department task)
   const handleResolveWithProof = async (complaintId) => {
     if (!afterImage || !resNote)
       return alert("Required: Upload After Image & write Resolution Note!");
@@ -81,7 +83,6 @@ const MunicipalDashboard = () => {
     formData.append("resolution_note", resNote);
 
     try {
-      // Direct call to officer update endpoint
       await API.patch(`grievances/officer/${complaintId}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -118,7 +119,7 @@ const MunicipalDashboard = () => {
 
   if (loading)
     return (
-      <div className="p-20 text-center text-blue-600 font-black animate-pulse text-xl tracking-widest">
+      <div className="p-20 text-center text-blue-600 font-black animate-pulse text-xl tracking-widest uppercase">
         SECURE SYNC: {user?.department} TERMINAL...
       </div>
     );
@@ -137,113 +138,145 @@ const MunicipalDashboard = () => {
             Division
           </p>
         </div>
-        <div className="bg-slate-900 text-white px-8 py-4 rounded-3xl text-center shadow-2xl transform hover:scale-105 transition-all">
+
+        {/* ✨ NEW View Map Toggle */}
+        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
+          <button
+            onClick={() => setActiveView("list")}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${activeView === "list" ? "bg-white shadow-md text-blue-600" : "text-slate-500"}`}
+          >
+            📑 Tasks
+          </button>
+          <button
+            onClick={() => setActiveView("map")}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${activeView === "map" ? "bg-white shadow-md text-blue-600" : "text-slate-500"}`}
+          >
+            🌍 View Map
+          </button>
+        </div>
+
+        <div className="bg-slate-900 text-white px-8 py-4 rounded-3xl text-center shadow-2xl">
           <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">
             Performance Index
           </p>
-          <p className="text-3xl font-black text-blue-400">
-            {avgRating} <span className="text-sm text-white opacity-40">★</span>
-          </p>
+          <p className="text-3xl font-black text-blue-400">{avgRating} ★</p>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Workload"
-          value={stats.total}
-          color="bg-blue-600"
-          icon="📂"
-        />
-        <StatCard
-          title="Active Queue"
-          value={stats.pending}
-          color="bg-amber-500"
-          icon="⏳"
-        />
-        <StatCard
-          title="Completed"
-          value={stats.resolved}
-          color="bg-emerald-500"
-          icon="✅"
-        />
-        <StatCard
-          title="Filtered"
-          value={filteredComplaints.length}
-          color="bg-slate-800"
-          icon="🔍"
-        />
-      </div>
-
-      {/* Filtering & Table Section */}
-      <div className="bg-white rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden">
-        <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
-          <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
-            📑 Operational Task List
-          </h2>
-          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
-            {["All", "Pending", "In_Progress", "Resolved"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${statusFilter === status ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-              >
-                {status.replace("_", " ")}
-              </button>
-            ))}
+      {activeView === "map" ? (
+        <div className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 h-[600px] animate-in fade-in zoom-in-95 duration-500">
+          <GrievanceMap
+            complaints={complaints}
+            onMarkerClick={(c) => {
+              setViewDetails(c);
+              setActiveView("list");
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <StatCard
+              title="Total Workload"
+              value={stats.total}
+              color="bg-blue-600"
+              icon="📂"
+            />
+            <StatCard
+              title="Active Queue"
+              value={stats.pending}
+              color="bg-amber-500"
+              icon="⏳"
+            />
+            <StatCard
+              title="Completed"
+              value={stats.resolved}
+              color="bg-emerald-500"
+              icon="✅"
+            />
+            <StatCard
+              title="Rejected"
+              value={stats.rejected}
+              color="bg-red-600"
+              icon="🚫"
+            />
           </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
-              <tr>
-                <th className="px-8 py-6">Incident ID</th>
-                <th className="px-8 py-6">Details</th>
-                <th className="px-8 py-6 text-center">Priority</th>
-                <th className="px-8 py-6 text-center">Status</th>
-                <th className="px-8 py-6 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredComplaints.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => setViewDetails(c)}
-                  className="group hover:bg-blue-50/40 cursor-pointer transition-all"
-                >
-                  <td className="px-8 py-6 font-mono font-bold text-slate-300 text-xs">
-                    #{c.id}
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="font-bold text-slate-800 text-sm truncate max-w-[200px]">
-                      {c.description}
-                    </p>
-                    <span className="text-[9px] text-blue-500 font-black uppercase">
-                      📍 Click to Inspect Geo-Data
-                    </span>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <span
-                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${c.priority === "CRITICAL" ? "bg-red-50 text-red-600 border-red-100 animate-pulse" : "bg-slate-50 text-slate-500 border-slate-100"}`}
+          {/* Filtering & Table Section */}
+          <div className="bg-white rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden">
+            <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
+              <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+                Operational Task List
+              </h2>
+              <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
+                {["All", "Pending", "In_Progress", "Resolved", "Rejected"].map(
+                  (status) => (
+                    <button
+                      key={status}
+                      onClick={() => setStatusFilter(status)}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${statusFilter === status ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
                     >
-                      {c.priority}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <StatusBadge status={c.status} />
-                  </td>
-                  <td className="px-8 py-6 text-right font-black text-blue-400 group-hover:text-blue-600 text-[10px] uppercase">
-                    Review Case →
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                      {status.replace("_", " ")}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
 
-      {/* ✨ Professional Detail Popup Modal */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
+                  <tr>
+                    <th className="px-8 py-6">Complaint ID</th>
+                    <th className="px-8 py-6">Details</th>
+                    <th className="px-8 py-6 text-center">Priority</th>
+                    <th className="px-8 py-6 text-center">Status</th>
+                    <th className="px-8 py-6 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredComplaints.map((c) => (
+                    <tr
+                      key={c.id}
+                      onClick={() => setViewDetails(c)}
+                      className="group hover:bg-blue-50/40 cursor-pointer transition-all"
+                    >
+                      {/* ✨ Bold ID */}
+                      <td className="px-8 py-6 font-mono font-black text-slate-900 text-sm">
+                        #{c.id}
+                      </td>
+                      <td className="px-8 py-6">
+                        <p className="font-bold text-slate-800 text-sm truncate max-w-[250px]">
+                          {c.description}
+                        </p>
+                        <span className="text-[9px] text-blue-500 font-black uppercase tracking-tighter">
+                          📍 Geo-Tagged Incident
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${c.priority === "CRITICAL" ? "bg-red-50 text-red-600 border-red-100 animate-pulse" : "bg-slate-50 text-slate-500 border-slate-100"}`}
+                        >
+                          {c.priority}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-center">
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td className="px-8 py-6 text-right font-black text-blue-400 group-hover:text-blue-600 text-[10px] uppercase tracking-tighter">
+                        Review Case →
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal & Popups */}
       {viewDetails && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[5000] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-4xl rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
@@ -252,8 +285,9 @@ const MunicipalDashboard = () => {
                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
                   Grievance Authority Terminal
                 </p>
-                <h3 className="text-xl font-bold uppercase tracking-tight">
-                  Case Reference: #{viewDetails.id}
+                {/* ✨ Bold ID in Modal */}
+                <h3 className="text-2xl font-black uppercase tracking-tight">
+                  CASE REFERENCE: #{viewDetails.id}
                 </h3>
               </div>
               <button
@@ -264,11 +298,10 @@ const MunicipalDashboard = () => {
               </button>
             </div>
 
-            <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 max-h-[75vh] overflow-y-auto">
-              {/* Left Side: Actions */}
+            <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
               <div className="space-y-8">
                 <div>
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">
+                  <label className="text-[11px] font-black text-slate-400 uppercase block mb-3">
                     Citizen Description
                   </label>
                   <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-6 rounded-3xl border border-slate-100 italic">
@@ -278,17 +311,17 @@ const MunicipalDashboard = () => {
 
                 {viewDetails.status !== "resolved" ? (
                   <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 space-y-6 shadow-inner">
-                    <h4 className="text-[11px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-2">
-                      <span>📸</span> Upload Resolution Proof
+                    <h4 className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">
+                      📸 Upload Resolution Proof
                     </h4>
                     <input
                       type="file"
                       onChange={(e) => setAfterImage(e.target.files[0])}
-                      className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:cursor-pointer"
+                      className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full"
                     />
                     <textarea
-                      placeholder="Describe technical work performed..."
-                      className="w-full p-4 text-sm rounded-2xl border-none outline-none shadow-sm h-28"
+                      placeholder="Technical summary of work..."
+                      className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-28"
                       onChange={(e) => setResNote(e.target.value)}
                     />
                     <button
@@ -306,22 +339,19 @@ const MunicipalDashboard = () => {
                     <p className="text-sm italic text-blue-900 leading-relaxed font-medium">
                       "
                       {viewDetails.resolution_note ||
-                        "Resolved successfully by department."}
+                        "Task closed successfully."}
                       "
                     </p>
                   </div>
                 )}
 
                 <div className="pt-4 border-t border-slate-100">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-4">
-                    Update Task Status
-                  </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() =>
                         handleStatusChange(viewDetails.id, "in_progress")
                       }
-                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-blue-500 transition-all"
+                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-blue-500"
                     >
                       🏗️ In Progress
                     </button>
@@ -329,7 +359,7 @@ const MunicipalDashboard = () => {
                       onClick={() =>
                         handleStatusChange(viewDetails.id, "rejected")
                       }
-                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-red-500 transition-all"
+                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-red-500"
                     >
                       🚫 Reject
                     </button>
@@ -337,15 +367,14 @@ const MunicipalDashboard = () => {
                 </div>
               </div>
 
-              {/* Right Side: Visual Evidence */}
               <div className="space-y-6">
                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">
                   Before / After Inspection
                 </label>
                 <div className="space-y-4">
                   <div className="relative">
-                    <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded shadow-lg uppercase">
-                      Reported Image
+                    <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase">
+                      Reported State
                     </span>
                     <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                       <img
@@ -358,10 +387,11 @@ const MunicipalDashboard = () => {
                     </div>
                   </div>
 
+                  {/* ✨ Fixed Resolution Proof Display */}
                   {viewDetails.status === "resolved" && (
                     <div className="relative">
-                      <span className="absolute top-4 left-4 z-10 bg-emerald-600 text-white text-[8px] font-black px-2 py-1 rounded shadow-lg uppercase">
-                        Officer Proof
+                      <span className="absolute top-4 left-4 z-10 bg-emerald-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase">
+                        Officer Verification
                       </span>
                       <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-emerald-50">
                         <img
@@ -391,7 +421,6 @@ const MunicipalDashboard = () => {
         </div>
       )}
 
-      {/* Global Image Modal */}
       {selectedImg && (
         <div
           className="fixed inset-0 bg-slate-950/95 z-[9999] flex items-center justify-center p-10 cursor-zoom-out"
@@ -400,6 +429,7 @@ const MunicipalDashboard = () => {
           <img
             src={selectedImg}
             className="max-w-full max-h-[90vh] rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-500 object-contain border-8 border-white/5"
+            alt="High Res Proof"
           />
         </div>
       )}

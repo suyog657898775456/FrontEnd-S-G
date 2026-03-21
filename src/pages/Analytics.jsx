@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchAllComplaints } from "../services/grievanceService"; // Direct fetch service
+import {
+  fetchUserComplaints,
+  fetchAllComplaints,
+} from "../services/grievanceService";
+import { AuthContext } from "../context/AuthContext"; // Token/User role check ke liye
 import {
   BarChart,
   Bar,
@@ -15,10 +19,10 @@ import {
 
 const Analytics = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext); // Get user role
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
 
-  // Base Configuration
   const statusConfig = [
     { name: "Total", color: "#1E293B" },
     { name: "Pending", color: "#3B82F6" },
@@ -28,13 +32,21 @@ const Analytics = () => {
   ];
 
   useEffect(() => {
-    const loadUserStats = async () => {
+    const loadStats = async () => {
       try {
-        // ✨ Fetching all complaints from backend
-        const data = await fetchAllComplaints();
+        setLoading(true);
+
+        // ✨ LOGIC FIX: User role ke hisaab se sahi function call karein
+        // Admin hai toh sabka data, Citizen hai toh sirf uska data
+        let data;
+        if (user?.role === "ADMIN") {
+          data = await fetchAllComplaints();
+        } else {
+          data = await fetchUserComplaints();
+        }
+
         const validData = Array.isArray(data) ? data : [];
 
-        // Logic: Calculate stats for this user only
         const stats = {
           Total: validData.length,
           Pending: validData.filter(
@@ -64,13 +76,13 @@ const Analytics = () => {
       }
     };
 
-    loadUserStats();
-  }, []);
+    if (user) loadStats();
+  }, [user]);
 
   if (loading)
     return (
-      <div className="p-20 text-center font-black text-blue-600 animate-pulse text-xl tracking-widest uppercase">
-        Analyzing Your Records...
+      <div className="flex items-center justify-center min-h-screen font-black text-blue-600 animate-pulse text-xl uppercase">
+        Analyzing Intelligence...
       </div>
     );
 
@@ -78,29 +90,23 @@ const Analytics = () => {
     <div className="max-w-6xl mx-auto px-4 py-12 bg-[#F8FAFC] min-h-screen font-sans">
       <button
         onClick={() => navigate(-1)}
-        className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 w-fit px-6 py-3 rounded-2xl transition-all border border-slate-200 hover:border-blue-200 bg-white shadow-sm active:scale-95"
+        className="mb-8 flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 w-fit px-6 py-3 rounded-2xl transition-all border border-slate-200 bg-white"
       >
-        ← Return to Dashboard
+        ← Return
       </button>
 
-      <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-        <div>
-          <span className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-2 block">
-            Personal Intelligence
-          </span>
-          <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">
-            Your <span className="text-blue-600">Analytics</span>
-          </h2>
-          <p className="text-slate-500 font-medium mt-2">
-            Verified statistical breakdown of your personal grievance history.
-          </p>
-        </div>
+      <div className="mb-12">
+        <span className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-2 block">
+          Personal Intelligence
+        </span>
+        <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase">
+          Your <span className="text-blue-600">Analytics</span>
+        </h2>
       </div>
 
-      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl"></div>
-
-        <div className="w-full relative z-10 h-[500px]">
+      {/* CHART CONTAINER FIX: added h-[500px] and min-h */}
+      <div className="bg-white p-8 md:p-12 rounded-[3.5rem] shadow-2xl border border-white relative overflow-visible">
+        <div className="w-full h-[400px] md:h-[500px] relative z-10">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
@@ -124,18 +130,11 @@ const Analytics = () => {
                 contentStyle={{
                   borderRadius: "24px",
                   border: "none",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
-                  padding: "20px",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
                   fontWeight: "900",
-                  textTransform: "uppercase",
                 }}
               />
-              <Bar
-                dataKey="value"
-                radius={[20, 20, 20, 20]}
-                barSize={70}
-                animationDuration={2000}
-              >
+              <Bar dataKey="value" radius={[20, 20, 20, 20]} barSize={60}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
@@ -143,7 +142,7 @@ const Analytics = () => {
                   dataKey="value"
                   position="top"
                   fill="#0F172A"
-                  fontSize={22}
+                  fontSize={20}
                   fontWeight="900"
                   offset={20}
                 />
@@ -152,35 +151,20 @@ const Analytics = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* BOTTOM STATS GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-16 pt-12 border-t border-slate-100">
           {chartData.map((item) => (
             <div
               key={item.name}
-              className={`group relative p-6 rounded-[2.5rem] border transition-all duration-500 ${item.name === "Total" ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50/50 border-white hover:bg-white hover:shadow-2xl"}`}
+              className={`p-6 rounded-[2.5rem] border transition-all ${item.name === "Total" ? "bg-slate-900 text-white" : "bg-slate-50/50"}`}
             >
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] mb-2">
+              <p className="text-[9px] font-black uppercase tracking-widest mb-2 opacity-60">
                 {item.name}
               </p>
-              <div className="flex items-baseline gap-2">
-                <p
-                  className={`text-4xl font-black ${item.name === "Total" ? "text-white" : "text-slate-800"}`}
-                >
-                  {item.value}
-                </p>
-                <span className="text-[10px] font-bold opacity-40 uppercase">
-                  Units
-                </span>
-              </div>
+              <p className="text-4xl font-black">{item.value}</p>
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="mt-16 flex flex-col items-center gap-2">
-        <div className="h-1 w-12 bg-blue-600 rounded-full"></div>
-        <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.6em]">
-          User-Specific Intelligence Data
-        </p>
       </div>
     </div>
   );

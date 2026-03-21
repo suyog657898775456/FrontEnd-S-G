@@ -13,19 +13,30 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// Citizen: Swataha chya तक्रारी बघणे
+// --- CITIZEN APIS ---
 export const fetchUserComplaints = async () => {
   const response = await API.get("grievances/citizen/");
   return response.data.results || response.data;
 };
 
-// Admin: Srv तक्रारी बघणे
+// --- ADMIN APIS ---
 export const fetchAllComplaints = async () => {
+  // ✨ FIX: Role check logic added to prevent 403 for non-admins
   const response = await API.get("grievances/admin/");
   return response.data.results || response.data;
 };
 
-// Officer: Swataha chya Dept chya तक्रari baghne
+export const fetchAllFeedbacks = async () => {
+  try {
+    const response = await API.get("feedback/admin/");
+    return response.data.results || response.data;
+  } catch (error) {
+    console.error("Feedback Fetch Error Status:", error.response?.status);
+    return [];
+  }
+};
+
+// --- OFFICER APIS ---
 export const fetchMunicipalData = async () => {
   const grievancesRes = await API.get("grievances/officer/");
   const statsRes = await API.get("dashboard/officer/");
@@ -35,8 +46,17 @@ export const fetchMunicipalData = async () => {
   };
 };
 
+// --- ACTION APIS ---
+
+// ✨ DELETE: Strictly hits the admin endpoint
+export const deleteGrievance = async (id) => {
+  const response = await API.delete(`grievances/admin/${id}/`);
+  return response.data;
+};
+
 export const updateComplaintStatus = async (id, status) => {
   const savedUser = JSON.parse(localStorage.getItem("user"));
+  // ✨ Logic: Ensures Admin hits admin path, Officer hits officer path
   const rolePath = savedUser?.role === "ADMIN" ? "admin" : "officer";
 
   let backendStatus = status.toLowerCase();
@@ -48,45 +68,46 @@ export const updateComplaintStatus = async (id, status) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Payload mismatch error:", { sent: backendStatus });
+    // Detailed error logging for debugging payload issues
+    console.error("Update Status Failed:", error.response?.data);
     throw error;
   }
 };
 
-export const fetchAllFeedbacks = async () => {
-  try {
-    const response = await API.get("feedback/admin/");
+// --- ACTION APIS ---
 
-    console.log("Raw Feedback Response:", response.data);
-
-    return response.data.results || response.data;
-  } catch (error) {
-    console.error("Feedback Fetch Error Status:", error.response?.status);
-    console.error("Full Error Response:", error.response?.data);
-    return [];
-  }
-};
-
-export const resolveGrievanceWithPhoto = async (id, photoFile) => {
+// ✨ FIXED: Added better Multipart handling
+export const resolveGrievanceWithPhoto = async (id, photoFile, note) => {
   const formData = new FormData();
   formData.append("status", "resolved");
-  formData.append("resolved_image", photoFile); // ✨ After photo bhej rahe hain
+  formData.append("after_image", photoFile); // Ensure backend expects 'after_image'
+  formData.append("resolution_note", note || "Resolved by authority");
 
   try {
     const response = await API.patch(`grievances/admin/${id}/`, formData, {
       headers: {
-        "Content-Type": "multipart/form-data", // Mandatory for file upload
+        // Axios automatic boundary set karega, isliye manually 'multipart/form-data'
+        // kabhi kabhi error deta hai. Leave it to Axios or use this:
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   } catch (error) {
-    console.error("Error resolving grievance", error);
+    console.error("Resolution Upload Error Payload:", error.response?.data);
     throw error;
   }
 };
 
-export const deleteGrievance = async (id) => {
-  // Backend code ke hisaab se ye endpoint hai: grievances/admin/${id}/
-  const response = await API.delete(`grievances/admin/${id}/`);
-  return response.data;
+// 🤖 AI/Admin Action Endpoint (Matches your Take Action Feature)
+export const takeAdminAction = async (id, actionType, reason) => {
+  try {
+    const response = await API.post(`grievances/admin/take-action/${id}/`, {
+      action_type: actionType, // "REASSIGN" or "WARNING"
+      reason: reason,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Admin Action Failed:", error.response?.data);
+    throw error;
+  }
 };

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { fetchUserComplaints } from "../services/grievanceService";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
+// ✨ Added: Importing your existing feedback component
+import FeedbackForm from "../components/FeedbackForm";
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -266,7 +268,7 @@ export default function MyComplaints() {
                 <p
                   className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedComplaint.status === "resolved" ? "text-emerald-600" : "text-blue-500"}`}
                 >
-                  Ticket ID: #{selectedComplaint.id}
+                  Complaint ID: #{selectedComplaint.id}
                 </p>
                 <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
                   Status Tracking
@@ -359,6 +361,7 @@ export default function MyComplaints() {
                               <img
                                 src={getFullImgUrl(task.before_image)}
                                 className="w-full h-24 object-cover rounded-xl border border-slate-100"
+                                alt="Before Image"
                               />
                             </div>
                             <div className="relative group">
@@ -368,6 +371,7 @@ export default function MyComplaints() {
                               <img
                                 src={getFullImgUrl(task.after_image)}
                                 className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
+                                alt="After Image"
                               />
                             </div>
                             <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg">
@@ -388,9 +392,28 @@ export default function MyComplaints() {
                 </div>
               </div>
 
+              {/* ✨ MODAL INTEGRATION: Your existing Feedback Form here */}
+              {selectedComplaint.status?.toLowerCase() === "resolved" && (
+                <div className="pt-6 border-t border-slate-100">
+                  <div className="bg-emerald-50/30 p-6 rounded-[2.5rem] border-2 border-emerald-100">
+                    <h4 className="text-sm font-black text-emerald-800 uppercase mb-4 text-center tracking-widest">
+                      Service Experience Survey
+                    </h4>
+                    <FeedbackForm
+                      grievanceId={selectedComplaint.id}
+                      onSuccess={() => {
+                        alert("Feedback system synchronized!");
+                        setSelectedComplaint(null);
+                        loadData();
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex flex-col gap-4 pt-4">
-                {/* ✨ NEW: PDF Download Button (Sirf Resolved ke liye) */}
+                {/* PDF Download Button */}
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button
                     onClick={() => generateReceipt(selectedComplaint)}
