@@ -16,9 +16,11 @@ const MunicipalDashboard = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [activeView, setActiveView] = useState("list"); // 'list' or 'map'
 
-  // ✨ Resolution States
+  // ✨ Resolution & Rejection States
   const [afterImage, setAfterImage] = useState(null);
   const [resNote, setResNote] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectFile, setRejectFile] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -44,11 +46,10 @@ const MunicipalDashboard = () => {
     if (!path)
       return "https://via.placeholder.com/800x600?text=No+Image+Available";
     if (path.startsWith("http")) return path;
-    // Prefix backend host to relative paths
     return `http://127.0.0.1:8000${path.startsWith("/") ? "" : "/"}${path}`;
   };
 
-  // ✅ Status-wise Filtering Logic (Including Rejected)
+  // ✅ Status-wise Filtering Logic
   const filteredComplaints = useMemo(() => {
     let filtered = complaints;
     if (statusFilter !== "All") {
@@ -73,37 +74,47 @@ const MunicipalDashboard = () => {
       .length,
   };
 
-  const handleResolveWithProof = async (complaintId) => {
-    if (!afterImage || !resNote)
-      return alert("Required: Upload After Image & write Resolution Note!");
-
+  // ✨ Unified Update Logic (Supports Resolve & Reject with Proof)
+  const handleUpdateAction = async (complaintId, targetStatus) => {
     const formData = new FormData();
-    formData.append("status", "resolved");
-    formData.append("after_image", afterImage);
-    formData.append("resolution_note", resNote);
+    formData.append("status", targetStatus);
+
+    if (targetStatus === "resolved") {
+      if (!afterImage || !resNote)
+        return alert("Upload Work Image & Resolution Note!");
+      formData.append("after_image", afterImage);
+      formData.append("resolution_note", resNote);
+    } else if (targetStatus === "rejected") {
+      if (!rejectReason || !rejectFile)
+        return alert("Provide Rejection Reason & Proof Image!");
+      formData.append("rejection_reason", rejectReason);
+      formData.append("rejection_proof", rejectFile);
+    }
 
     try {
       await API.patch(`grievances/officer/${complaintId}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("Task Completed! Resolution proof submitted.");
+      alert(`✅ Case marked as ${targetStatus.toUpperCase()}`);
       loadData();
       setViewDetails(null);
       setAfterImage(null);
+      setRejectFile(null);
       setResNote("");
+      setRejectReason("");
     } catch (err) {
-      alert("Update failed. Please check backend connection.");
+      console.error("Action Failed:", err.response?.data);
+      alert("Submission failed. Check backend fields.");
     }
   };
 
   const handleStatusChange = async (id, newStatus) => {
+    if (newStatus === "rejected" || newStatus === "resolved") return; // Use the other function
     try {
-      let statusToBackend = newStatus.toLowerCase();
-      if (statusToBackend === "in progress") statusToBackend = "in_progress";
+      let statusToBackend = newStatus.toLowerCase().replace(" ", "_");
       await updateComplaintStatus(id, statusToBackend);
       loadData();
-      if (viewDetails?.id === id)
-        setViewDetails({ ...viewDetails, status: statusToBackend });
+      alert("Status Sync Successful");
     } catch (err) {
       alert("Status sync failed.");
     }
@@ -139,7 +150,6 @@ const MunicipalDashboard = () => {
           </p>
         </div>
 
-        {/* ✨ NEW View Map Toggle */}
         <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
           <button
             onClick={() => setActiveView("list")}
@@ -175,7 +185,6 @@ const MunicipalDashboard = () => {
         </div>
       ) : (
         <>
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <StatCard
               title="Total Workload"
@@ -203,7 +212,6 @@ const MunicipalDashboard = () => {
             />
           </div>
 
-          {/* Filtering & Table Section */}
           <div className="bg-white rounded-[3rem] shadow-xl border border-gray-100 overflow-hidden">
             <div className="p-8 border-b border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
               <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
@@ -226,7 +234,7 @@ const MunicipalDashboard = () => {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
+                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase border-b">
                   <tr>
                     <th className="px-8 py-6">Complaint ID</th>
                     <th className="px-8 py-6">Details</th>
@@ -242,7 +250,6 @@ const MunicipalDashboard = () => {
                       onClick={() => setViewDetails(c)}
                       className="group hover:bg-blue-50/40 cursor-pointer transition-all"
                     >
-                      {/* ✨ Bold ID */}
                       <td className="px-8 py-6 font-mono font-black text-slate-900 text-sm">
                         #{c.id}
                       </td>
@@ -264,7 +271,7 @@ const MunicipalDashboard = () => {
                       <td className="px-8 py-6 text-center">
                         <StatusBadge status={c.status} />
                       </td>
-                      <td className="px-8 py-6 text-right font-black text-blue-400 group-hover:text-blue-600 text-[10px] uppercase tracking-tighter">
+                      <td className="px-8 py-6 text-right font-black text-blue-400 group-hover:text-blue-600 text-[10px] uppercase">
                         Review Case →
                       </td>
                     </tr>
@@ -276,16 +283,14 @@ const MunicipalDashboard = () => {
         </>
       )}
 
-      {/* Modal & Popups */}
       {viewDetails && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[5000] flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-4xl rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
+          <div className="bg-white w-full max-w-5xl rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col">
             <div className="bg-slate-900 p-8 text-white flex justify-between items-center">
               <div>
                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
                   Grievance Authority Terminal
                 </p>
-                {/* ✨ Bold ID in Modal */}
                 <h3 className="text-2xl font-black uppercase tracking-tight">
                   CASE REFERENCE: #{viewDetails.id}
                 </h3>
@@ -309,72 +314,100 @@ const MunicipalDashboard = () => {
                   </p>
                 </div>
 
-                {viewDetails.status !== "resolved" ? (
-                  <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 space-y-6 shadow-inner">
-                    <h4 className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">
-                      📸 Upload Resolution Proof
-                    </h4>
-                    <input
-                      type="file"
-                      onChange={(e) => setAfterImage(e.target.files[0])}
-                      className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full"
-                    />
-                    <textarea
-                      placeholder="Technical summary of work..."
-                      className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-28"
-                      onChange={(e) => setResNote(e.target.value)}
-                    />
-                    <button
-                      onClick={() => handleResolveWithProof(viewDetails.id)}
-                      className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all"
-                    >
-                      Submit Work Proof
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
-                    <label className="text-[11px] font-black text-blue-700 uppercase block mb-3">
-                      Official Resolution Report
+                {viewDetails.status !== "resolved" &&
+                  viewDetails.status !== "rejected" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                      {/* Resolve Section */}
+                      <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 space-y-4">
+                        <h4 className="text-[10px] font-black text-emerald-700 uppercase">
+                          Task Completion Proof
+                        </h4>
+                        <input
+                          type="file"
+                          onChange={(e) => setAfterImage(e.target.files[0])}
+                          className="text-[9px] block w-full"
+                        />
+                        <textarea
+                          placeholder="Work summary..."
+                          className="w-full p-3 text-xs rounded-xl h-20 outline-none"
+                          onChange={(e) => setResNote(e.target.value)}
+                        />
+                        <button
+                          onClick={() =>
+                            handleUpdateAction(viewDetails.id, "resolved")
+                          }
+                          className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700"
+                        >
+                          Submit Resolution
+                        </button>
+                      </div>
+
+                      {/* Reject Section */}
+                      <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100 space-y-4">
+                        <h4 className="text-[10px] font-black text-red-700 uppercase">
+                          Decline Request
+                        </h4>
+                        <input
+                          type="file"
+                          onChange={(e) => setRejectFile(e.target.files[0])}
+                          className="text-[9px] block w-full"
+                        />
+                        <textarea
+                          placeholder="Official reason..."
+                          className="w-full p-3 text-xs rounded-xl h-20 outline-none"
+                          onChange={(e) => setRejectReason(e.target.value)}
+                        />
+                        <button
+                          onClick={() =>
+                            handleUpdateAction(viewDetails.id, "rejected")
+                          }
+                          className="w-full bg-red-600 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-red-700"
+                        >
+                          Confirm Reject
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Display Final Notes if Closed */}
+                {(viewDetails.status === "resolved" ||
+                  viewDetails.status === "rejected") && (
+                  <div
+                    className={`p-6 rounded-[2rem] border ${viewDetails.status === "resolved" ? "bg-emerald-50 border-emerald-100 text-emerald-800" : "bg-red-50 border-red-100 text-red-800"}`}
+                  >
+                    <label className="text-[10px] font-black uppercase block mb-2">
+                      Final Authority Remarks
                     </label>
-                    <p className="text-sm italic text-blue-900 leading-relaxed font-medium">
+                    <p className="text-sm italic font-medium">
                       "
                       {viewDetails.resolution_note ||
-                        "Task closed successfully."}
+                        viewDetails.rejection_reason ||
+                        "Case closed."}
                       "
                     </p>
                   </div>
                 )}
 
                 <div className="pt-4 border-t border-slate-100">
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() =>
-                        handleStatusChange(viewDetails.id, "in_progress")
-                      }
-                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-blue-500"
-                    >
-                      🏗️ In Progress
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleStatusChange(viewDetails.id, "rejected")
-                      }
-                      className="bg-white border-2 border-slate-100 py-3 rounded-xl text-[10px] font-black uppercase hover:border-red-500"
-                    >
-                      🚫 Reject
-                    </button>
-                  </div>
+                  <button
+                    onClick={() =>
+                      handleStatusChange(viewDetails.id, "in_progress")
+                    }
+                    className="w-full bg-slate-800 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+                  >
+                    🏗️ Mark as Work In Progress
+                  </button>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-3">
-                  Before / After Inspection
+                <label className="text-[11px] font-black text-slate-400 uppercase block">
+                  Visual Evidence Analysis
                 </label>
                 <div className="space-y-4">
                   <div className="relative">
-                    <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase">
-                      Reported State
+                    <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg">
+                      BEFORE
                     </span>
                     <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                       <img
@@ -387,19 +420,28 @@ const MunicipalDashboard = () => {
                     </div>
                   </div>
 
-                  {/* ✨ Fixed Resolution Proof Display */}
-                  {viewDetails.status === "resolved" && (
+                  {(viewDetails.after_image || viewDetails.rejection_proof) && (
                     <div className="relative">
-                      <span className="absolute top-4 left-4 z-10 bg-emerald-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase">
-                        Officer Verification
+                      <span
+                        className={`absolute top-4 left-4 z-10 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg ${viewDetails.status === "resolved" ? "bg-emerald-600" : "bg-red-600"}`}
+                      >
+                        {viewDetails.status === "resolved"
+                          ? "WORK PROOF"
+                          : "REJECTION PROOF"}
                       </span>
-                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-emerald-50">
+                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                         <img
-                          src={getFullImgUrl(viewDetails.after_image)}
+                          src={getFullImgUrl(
+                            viewDetails.after_image ||
+                              viewDetails.rejection_proof,
+                          )}
                           className="w-full h-full object-cover cursor-zoom-in"
                           onClick={() =>
                             setSelectedImg(
-                              getFullImgUrl(viewDetails.after_image),
+                              getFullImgUrl(
+                                viewDetails.after_image ||
+                                  viewDetails.rejection_proof,
+                              ),
                             )
                           }
                         />
@@ -411,9 +453,9 @@ const MunicipalDashboard = () => {
                   href={viewDetails.formatted_address}
                   target="_blank"
                   rel="noreferrer"
-                  className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all"
+                  className="block w-full bg-slate-100 text-slate-800 p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-blue-600 hover:text-white transition-all"
                 >
-                  📍 Synchronize GPS Data
+                  📍 GPS Intelligence View
                 </a>
               </div>
             </div>
@@ -429,7 +471,7 @@ const MunicipalDashboard = () => {
           <img
             src={selectedImg}
             className="max-w-full max-h-[90vh] rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-500 object-contain border-8 border-white/5"
-            alt="High Res Proof"
+            alt="Evidence"
           />
         </div>
       )}
@@ -461,7 +503,7 @@ const StatusBadge = ({ status }) => {
     bg = "bg-blue-50 text-blue-600 border-blue-100 animate-pulse";
   return (
     <span
-      className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border-2 ${bg}`}
+      className={`px-4 py-1 rounded-full text-[9px] font-black uppercase border-2 ${bg}`}
     >
       {status?.replace("_", " ")}
     </span>

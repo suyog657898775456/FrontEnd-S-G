@@ -258,15 +258,15 @@ export default function MyComplaints() {
       {selectedComplaint && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[5000] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
-            className={`bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300 border-t-[12px] ${selectedComplaint.status === "resolved" ? "border-emerald-500" : "border-slate-900"}`}
+            className={`bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300 border-t-[12px] ${selectedComplaint.status === "resolved" ? "border-emerald-500" : selectedComplaint.status === "rejected" ? "border-red-500" : "border-slate-900"}`}
           >
             {/* Modal Header */}
             <div
-              className={`${selectedComplaint.status === "resolved" ? "bg-emerald-50" : "bg-slate-50"} p-8 flex justify-between items-center border-b`}
+              className={`${selectedComplaint.status === "resolved" ? "bg-emerald-50" : selectedComplaint.status === "rejected" ? "bg-red-50" : "bg-slate-50"} p-8 flex justify-between items-center border-b`}
             >
               <div>
                 <p
-                  className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedComplaint.status === "resolved" ? "text-emerald-600" : "text-blue-500"}`}
+                  className={`text-[10px] font-black uppercase tracking-widest mb-1 ${selectedComplaint.status === "resolved" ? "text-emerald-600" : selectedComplaint.status === "rejected" ? "text-red-500" : "text-blue-500"}`}
                 >
                   Complaint ID: #{selectedComplaint.id}
                 </p>
@@ -302,6 +302,44 @@ export default function MyComplaints() {
               </div>
 
               <StatusTimeline status={selectedComplaint.status} />
+
+              {/* 🚨 NEW FEATURE: Admin Rejection Insights Box */}
+              {selectedComplaint.status?.toLowerCase() === "rejected" && (
+                <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 space-y-4 animate-pulse">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-[11px] font-black text-red-700 uppercase tracking-widest flex items-center gap-2">
+                      <span>⚠️</span> Rejection Evidence & Reason
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[9px] font-black text-red-400 uppercase block mb-1">
+                        Official Proof
+                      </label>
+                      <img
+                        src={getFullImgUrl(selectedComplaint.rejection_proof)}
+                        className="w-full h-32 object-cover rounded-2xl border-2 border-red-200 shadow-sm"
+                        alt="Rejection Proof"
+                        onError={(e) =>
+                          (e.target.src =
+                            "https://via.placeholder.com/300x200?text=No+Proof+Available")
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col justify-center">
+                      <label className="text-[9px] font-black text-red-400 uppercase block mb-1">
+                        Remarks
+                      </label>
+                      <p className="text-sm font-bold text-red-800 italic bg-white/50 p-4 rounded-2xl border border-red-100">
+                        "
+                        {selectedComplaint.rejection_reason ||
+                          "No specific reason provided by the authority."}
+                        "
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Side: Summary */}
@@ -358,7 +396,6 @@ export default function MyComplaints() {
                               <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10">
                                 Before
                               </p>
-                              {/* 🚀 FIXED: Wrapped in getFullImgUrl to fetch from backend properly */}
                               <img
                                 src={getFullImgUrl(task.before_image)}
                                 className="w-full h-24 object-cover rounded-xl border border-slate-100"
@@ -369,7 +406,6 @@ export default function MyComplaints() {
                               <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 text-emerald-600">
                                 After
                               </p>
-                              {/* 🚀 FIXED: Wrapped in getFullImgUrl to fetch from backend properly */}
                               <img
                                 src={getFullImgUrl(task.after_image)}
                                 className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
@@ -394,7 +430,7 @@ export default function MyComplaints() {
                 </div>
               </div>
 
-              {/* ✨ MODAL INTEGRATION: Your existing Feedback Form here */}
+              {/* ✨ MODAL INTEGRATION: Feedback Form */}
               {selectedComplaint.status?.toLowerCase() === "resolved" && (
                 <div className="pt-6 border-t border-slate-100">
                   <div className="bg-emerald-50/30 p-6 rounded-[2.5rem] border-2 border-emerald-100">
@@ -415,7 +451,6 @@ export default function MyComplaints() {
 
               {/* Action Buttons */}
               <div className="flex flex-col gap-4 pt-4">
-                {/* PDF Download Button */}
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button
                     onClick={() => generateReceipt(selectedComplaint)}
@@ -467,7 +502,7 @@ function ComplaintGroup({ title, data, color, onCardClick }) {
                 {c.description}
               </h4>
               <span
-                className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${color === "emerald" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-white text-slate-400"}`}
+                className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${color === "emerald" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : color === "red" ? "bg-red-100 text-red-700 border-red-200" : "bg-white text-slate-400"}`}
               >
                 {c.status?.replace("_", " ")}
               </span>
@@ -509,7 +544,7 @@ function StatusTimeline({ status }) {
   if (currentStatus === "rejected")
     return (
       <div className="p-6 bg-red-50 text-red-600 rounded-[2rem] font-black uppercase text-xs tracking-widest text-center border-2 border-red-100 animate-pulse">
-        ⚠️ Case Rejected by Admin Panel
+        ⚠️ Case Rejected by Authority
       </div>
     );
 

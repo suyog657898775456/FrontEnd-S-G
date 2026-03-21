@@ -55,6 +55,7 @@ export default function AdminDashboard() {
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState("analytics");
+  const [rejectFile, setRejectFile] = useState(null); // Rejection proof ke liye
 
   const [selectedImg, setSelectedImg] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
@@ -223,21 +224,44 @@ export default function AdminDashboard() {
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
-    if (newStatus === "rejected" && !rejectReason)
-      return alert("Please provide a reason for rejection.");
+    if (newStatus === "rejected") {
+      if (!rejectReason) return alert("Please provide a reason for rejection.");
+      if (!rejectFile)
+        return alert("Please upload an image as rejection proof.");
+    }
+
+    const formData = new FormData();
+    formData.append("status", newStatus);
+
+    if (newStatus === "rejected") {
+      formData.append("rejection_reason", rejectReason);
+      formData.append("rejection_proof", rejectFile); // Postman field name match
+    } else {
+      formData.append("resolution_note", "Updated by Admin");
+    }
+
     try {
-      const payload = {
-        status: newStatus,
-        resolution_note:
-          newStatus === "rejected" ? rejectReason : "Updated by Admin",
-      };
-      await API.patch(`grievances/admin/${id}/`, payload);
-      alert(`System: Complaint marked as ${newStatus.replace("_", " ")}`);
+      setIsSubmitting(true); // Loading state if you have one
+
+      // 🚀 Patch request with FormData
+      await API.patch(`grievances/admin/${id}/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert(`✅ System: Complaint marked as ${newStatus.replace("_", " ")}`);
       loadData();
       setViewDetails(null);
       setRejectReason("");
+      setRejectFile(null); // Reset file after success
     } catch (error) {
-      alert("Update failed.");
+      console.error("Update Error Details:", error.response?.data);
+      const errorMsg =
+        error.response?.data?.rejection_reason?.[0] ||
+        error.response?.data?.detail ||
+        "Update failed.";
+      alert(`❌ Error: ${errorMsg}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -818,22 +842,54 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                       <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4">
-                        <h4 className="text-[11px] font-black text-red-700 uppercase">
-                          Reject Request
+                        <h4 className="text-[11px] font-black text-red-700 uppercase flex items-center gap-2">
+                          <span>🚫</span> Reject Request
                         </h4>
+
+                        {/* 📸 Rejection Proof Image Fetching/Uploading Setup */}
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-red-400 uppercase ml-2 tracking-widest">
+                            Upload Rejection Proof
+                          </label>
+                          <div className="relative border-2 border-dashed border-red-200 rounded-2xl bg-white/50 p-2 transition-all hover:bg-white">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
+                              onChange={(e) => setRejectFile(e.target.files[0])}
+                            />
+                            {rejectFile && (
+                              <p className="text-[8px] text-green-600 font-bold mt-1 ml-2 flex items-center gap-1">
+                                ✅ {rejectFile.name} ready for secure upload
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ✍️ Rejection Reason Textarea */}
                         <textarea
-                          placeholder="Reason..."
-                          className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm"
+                          placeholder="State official reason for rejection..."
+                          className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200 transition-all resize-none"
+                          value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
                         />
+
+                        {/* 🚀 Action Button */}
                         <button
                           onClick={() =>
                             handleUpdateStatus(viewDetails.id, "rejected")
                           }
-                          className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 shadow-lg shadow-red-100 transition-all"
+                          className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:bg-slate-300 disabled:shadow-none"
+                          disabled={!rejectReason || !rejectFile}
                         >
-                          Deny Request
+                          Confirm Denial & Notify
                         </button>
+
+                        {!rejectFile && (
+                          <p className="text-[8px] text-red-400 text-center font-bold italic">
+                            * Proof image is mandatory for rejection audit
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
