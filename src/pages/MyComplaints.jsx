@@ -358,6 +358,7 @@ export default function MyComplaints() {
                               <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10">
                                 Before
                               </p>
+                              {/* 🚀 FIXED: Wrapped in getFullImgUrl to fetch from backend properly */}
                               <img
                                 src={getFullImgUrl(task.before_image)}
                                 className="w-full h-24 object-cover rounded-xl border border-slate-100"
@@ -368,6 +369,7 @@ export default function MyComplaints() {
                               <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 text-emerald-600">
                                 After
                               </p>
+                              {/* 🚀 FIXED: Wrapped in getFullImgUrl to fetch from backend properly */}
                               <img
                                 src={getFullImgUrl(task.after_image)}
                                 className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
@@ -431,19 +433,6 @@ export default function MyComplaints() {
                 >
                   📍 View Location Insight
                 </a>
-
-                {selectedComplaint.status?.toLowerCase() === "resolved" && (
-                  <button
-                    onClick={() =>
-                      navigate("/feedback", {
-                        state: { grievanceId: selectedComplaint.id },
-                      })
-                    }
-                    className="w-full bg-emerald-600 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all"
-                  >
-                    ⭐ Authenticate Service Quality
-                  </button>
-                )}
               </div>
             </div>
           </div>

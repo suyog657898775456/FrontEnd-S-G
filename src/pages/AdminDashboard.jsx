@@ -3,6 +3,7 @@ import {
   fetchAllComplaints,
   updateComplaintStatus,
   fetchAllFeedbacks,
+  takeAdminAction,
 } from "../services/grievanceService";
 import API from "../services/api";
 import GrievanceMap from "../components/GrievanceMap";
@@ -97,7 +98,7 @@ export default function AdminDashboard() {
   };
 
   const handleAdminAction = async (id, type) => {
-    const reason = prompt(`Enter reason for ${type}:`); // Aap iske liye ek chota modal bhi bana sakte hain
+    const reason = prompt(`Enter reason for ${type}:`);
     if (!reason) return;
 
     try {
@@ -230,7 +231,6 @@ export default function AdminDashboard() {
         resolution_note:
           newStatus === "rejected" ? rejectReason : "Updated by Admin",
       };
-      // 🚀 FIXED: Pointed to admin endpoint
       await API.patch(`grievances/admin/${id}/`, payload);
       alert(`System: Complaint marked as ${newStatus.replace("_", " ")}`);
       loadData();
@@ -250,7 +250,6 @@ export default function AdminDashboard() {
     formData.append("resolution_note", resNote);
 
     try {
-      // 🚀 FIXED: Pointed to admin endpoint
       await API.patch(`grievances/admin/${id}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -273,19 +272,13 @@ export default function AdminDashboard() {
       return;
 
     try {
-      // 🚀 FIXED: Changed from officer to admin
       await API.delete(`grievances/admin/${id}/`);
-
       alert("System: Grievance record deleted successfully.");
-
       loadData();
       setViewDetails(null);
     } catch (error) {
       console.error("Delete Error:", error.response?.data);
-      const errorMsg =
-        error.response?.data?.detail ||
-        "You do not have permission to delete this.";
-      alert(`Delete Failed: ${errorMsg}`);
+      alert(`Delete Failed: ${error.response?.data?.detail || "Error"}`);
     }
   };
 
@@ -298,21 +291,17 @@ export default function AdminDashboard() {
       { name: "Rejected", count: 0, color: "#ef4444" },
     ];
 
-    // ✨ Filtering for Parent complaints only (AI logic for charts)
     const uniqueComplaints = complaints.filter(
       (c) => c.is_duplicate === false || c.parent_id === null,
     );
 
     uniqueComplaints.forEach((c) => {
       const depts = Array.isArray(c.department) ? c.department : [c.department];
-
-      // Filter by active department selection
       if (
         activeDept === "All" ||
         depts.some((d) => d?.toLowerCase() === activeDept.toLowerCase())
       ) {
         const s = c.status?.toLowerCase().replace(" ", "_");
-
         if (s === "pending") statsArr[0].count++;
         else if (s === "in_progress") statsArr[1].count++;
         else if (s === "resolved") statsArr[2].count++;
@@ -323,16 +312,12 @@ export default function AdminDashboard() {
   };
 
   // ---------------- ✨ AI-OPTIMIZED FILTERING ----------------
-  const displayComplaints = complaints.filter((c) => {
-    // 1. Sirf wahi dikhao jo duplicates NAHI hain (Parent complaints)
-    const isParent = c.is_duplicate === false || c.parent_id === null;
-
-    // 2. Status Match Logic
+  // 🚀 FIXED: We use the name 'filteredComplaints' here so that the entire dashboard UI
+  // which depends on this variable name (Stat counts, Badge, Search) continues to work.
+  const filteredComplaints = complaints.filter((c) => {
     const matchesStatus =
       filter === "All" ||
       c.status?.toLowerCase().replace(" ", "_") === filter.toLowerCase();
-
-    // 3. Search Logic (Name, ID, Department)
     const searchableDepts = Array.isArray(c.department)
       ? c.department.join(" ")
       : c.department || "";
@@ -345,8 +330,12 @@ export default function AdminDashboard() {
       searchQuery === "" ||
       searchableDepts.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Final decision: Parent hona chahiye AND filters match karne chahiye
-    return isParent && matchesStatus && matchesSearch;
+    return matchesStatus && matchesSearch;
+  });
+
+  // ✨ Separate variable for Table Display (Hiding Duplicates only in the list)
+  const displayComplaints = filteredComplaints.filter((c) => {
+    return c.is_duplicate === false || c.parent_id === null;
   });
 
   if (loading)
@@ -379,10 +368,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* 2. Alert Ticker (Moving alerts for Critical/High) */}
         <AlertTicker complaints={complaints} />
 
-        {/* Stat Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <StatBox
             title="Total Records"
@@ -422,7 +409,6 @@ export default function AdminDashboard() {
           />
         </div>
 
-        {/* --- MODERN STYLED CHART BOX --- */}
         <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-xl shadow-slate-200/40 min-h-[550px] transition-all duration-500">
           {activeView === "analytics" ? (
             <>
@@ -522,9 +508,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* --- 🔍 Refined Search & Filter Control Hub --- */}
         <div className="flex flex-col md:flex-row gap-4 bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-gray-100 mb-6">
-          {/* Search Input Area */}
           <div className="relative flex-1 group">
             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors">
               🔍
@@ -538,7 +522,6 @@ export default function AdminDashboard() {
             />
           </div>
 
-          {/* Status Filter Dropdown */}
           <div className="flex items-center gap-3 bg-slate-50 px-6 py-2 rounded-2xl border-2 border-transparent focus-within:border-blue-500 transition-all">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Status:
@@ -556,14 +539,13 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          {/* --- 🚀 Modern Records Counter Badge --- */}
           <div className="hidden lg:flex items-center gap-3 bg-gradient-to-br from-blue-600 to-indigo-700 px-6 py-4 rounded-[1.5rem] shadow-[0_10px_25px_-5px_rgba(37,99,235,0.4)] border border-blue-400/20 relative overflow-hidden">
             <div className="flex flex-col items-start leading-none">
               <span className="text-[9px] font-black uppercase text-blue-100/70 tracking-[0.2em]">
                 Database Match
               </span>
               <p className="text-xl font-black text-white mt-1 flex items-baseline gap-1">
-                {filteredComplaints.length}
+                {filteredComplaints.length}{" "}
                 <span className="text-[10px] font-bold text-blue-200/80">
                   Entries
                 </span>
@@ -577,7 +559,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Data Table */}
         <div className="bg-white border border-gray-100 rounded-[2.5rem] shadow-sm overflow-hidden">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b">
@@ -597,32 +578,25 @@ export default function AdminDashboard() {
                   onClick={() => setViewDetails(c)}
                   className="hover:bg-blue-50/40 cursor-pointer transition-all group"
                 >
-                  {/* ✨ Bold ID */}
                   <td className="px-8 py-6 font-mono font-black text-slate-900 text-sm">
                     #{c.id}
                   </td>
                   <td className="px-8 py-6 flex items-center gap-3">
-                    {/* Avatar Box */}
                     <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-black text-xs group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                       {(c.citizen_name || "U")[0]}
                     </div>
-
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-bold text-gray-800 leading-none">
                           {c.citizen_name}
                         </p>
-
-                        {/* 🤖 AI Impact Badge: Agar 1 se zyada reports hain tabhi dikhega */}
                         {c.total_reports > 1 && (
                           <div className="flex items-center gap-1 bg-orange-50 text-orange-600 text-[9px] font-black px-2 py-0.5 rounded-lg border border-orange-100 animate-pulse">
-                            <span className="text-[10px]">🔥</span>
+                            <span>🔥</span>{" "}
                             <span>{c.total_reports} REPORTS</span>
                           </div>
                         )}
                       </div>
-
-                      {/* Subtitle for context */}
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mt-0.5">
                         {c.total_reports > 1
                           ? "Merged Intelligence"
@@ -647,35 +621,14 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span
-                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border-2 transition-all ${
-                        {
-                          critical:
-                            "bg-red-100 text-red-700 border-red-200 animate-pulse",
-                          high: "bg-orange-100 text-orange-700 border-orange-200",
-                          medium: "bg-blue-100 text-blue-700 border-blue-200",
-                          low: "bg-slate-100 text-slate-500 border-slate-200",
-                        }[c.priority?.toLowerCase()] ||
-                        "bg-slate-50 text-slate-400 border-slate-100"
-                      }`}
+                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border-2 transition-all ${{ critical: "bg-red-100 text-red-700 border-red-200 animate-pulse", high: "bg-orange-100 text-orange-700 border-orange-200", medium: "bg-blue-100 text-blue-700 border-blue-200", low: "bg-slate-100 text-slate-500 border-slate-200" }[c.priority?.toLowerCase()] || "bg-slate-50 text-slate-400 border-slate-100"}`}
                     >
                       {c.priority}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span
-                      className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border-2 transition-all ${
-                        {
-                          pending: "bg-blue-50 text-blue-600 border-blue-100",
-                          in_progress:
-                            "bg-amber-50 text-amber-600 border-amber-100 animate-pulse",
-                          resolved:
-                            "bg-emerald-50 text-emerald-700 border-emerald-100",
-                          rejected: "bg-red-50 text-red-700 border-red-100",
-                          escalated:
-                            "bg-purple-50 text-purple-700 border-purple-100",
-                        }[c.status?.toLowerCase().replace(" ", "_")] ||
-                        "bg-slate-50 text-slate-500 border-slate-100"
-                      }`}
+                      className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border-2 transition-all ${{ pending: "bg-blue-50 text-blue-600 border-blue-100", in_progress: "bg-amber-50 text-amber-600 border-amber-100 animate-pulse", resolved: "bg-emerald-50 text-emerald-700 border-emerald-100", rejected: "bg-red-50 text-red-700 border-red-100", escalated: "bg-purple-50 text-purple-700 border-purple-100" }[c.status?.toLowerCase().replace(" ", "_")] || "bg-slate-50 text-slate-500 border-slate-100"}`}
                     >
                       {c.status?.replace("_", " ")}
                     </span>
@@ -689,7 +642,6 @@ export default function AdminDashboard() {
           </table>
         </div>
 
-        {/* PDF Export Section */}
         <div className="bg-blue-600 p-8 rounded-[3rem] text-white shadow-2xl shadow-blue-200 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
             <h3 className="text-xl font-black uppercase italic">
@@ -728,7 +680,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Modal Logic (Intact) */}
         {viewDetails && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col my-auto">
@@ -760,7 +711,6 @@ export default function AdminDashboard() {
                     </p>
                   </div>
 
-                  {/* --- 🤝 Crowd Insights (Combined Reporters List) --- */}
                   {viewDetails.total_reports > 1 && (
                     <div className="bg-blue-50/50 p-6 rounded-[2.5rem] border border-blue-100/50 space-y-4">
                       <div className="flex justify-between items-center">
@@ -772,9 +722,7 @@ export default function AdminDashboard() {
                           {viewDetails.total_reports} CITIZENS AFFECTED
                         </span>
                       </div>
-
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                        {/* Primary Reporter (Jo Modal mein already hai) */}
                         <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-blue-50 shadow-sm">
                           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black italic">
                             PR
@@ -788,9 +736,6 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                         </div>
-
-                        {/* 🤖 AI Simulated: Yahan aap backend se aane wali 'duplicates' list map kar sakte hain */}
-                        {/* Agar backend list nahi bhej raha, toh hum ye status dikhayenge: */}
                         <div className="flex items-center gap-3 bg-white/60 p-3 rounded-2xl border border-dashed border-blue-200">
                           <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">
                             +{viewDetails.total_reports - 1}
@@ -803,7 +748,6 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* --- 🚀 NEW FEATURE: Admin Take Action (Reassign/Warning) --- */}
                   <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-dashed border-slate-200">
                     <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
                       <span>🛡️</span> Administrative Intelligence
@@ -878,7 +822,7 @@ export default function AdminDashboard() {
                           Reject Request
                         </h4>
                         <textarea
-                          placeholder="Reason for rejection..."
+                          placeholder="Reason..."
                           className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm"
                           onChange={(e) => setRejectReason(e.target.value)}
                         />
@@ -924,7 +868,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-        {/* Global Zoom Modal */}
         {selectedImg && (
           <div
             className="fixed inset-0 bg-slate-950/95 z-[9999] flex items-center justify-center p-10 cursor-zoom-out animate-in fade-in duration-300"
