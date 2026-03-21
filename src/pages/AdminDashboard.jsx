@@ -56,6 +56,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeView, setActiveView] = useState("analytics");
   const [rejectFile, setRejectFile] = useState(null); // Rejection proof ke liye
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
 
   const [selectedImg, setSelectedImg] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
@@ -241,7 +242,7 @@ export default function AdminDashboard() {
     }
 
     try {
-      setIsSubmitting(true); // Loading state if you have one
+      setIsSubmitting(true); // Loading state
 
       // 🚀 Patch request with FormData
       await API.patch(`grievances/admin/${id}/`, formData, {
@@ -336,8 +337,6 @@ export default function AdminDashboard() {
   };
 
   // ---------------- ✨ AI-OPTIMIZED FILTERING ----------------
-  // 🚀 FIXED: We use the name 'filteredComplaints' here so that the entire dashboard UI
-  // which depends on this variable name (Stat counts, Badge, Search) continues to work.
   const filteredComplaints = complaints.filter((c) => {
     const matchesStatus =
       filter === "All" ||
@@ -357,7 +356,6 @@ export default function AdminDashboard() {
     return matchesStatus && matchesSearch;
   });
 
-  // ✨ Separate variable for Table Display (Hiding Duplicates only in the list)
   const displayComplaints = filteredComplaints.filter((c) => {
     return c.is_duplicate === false || c.parent_id === null;
   });
@@ -539,7 +537,7 @@ export default function AdminDashboard() {
             </span>
             <input
               type="text"
-              placeholder="Instant Search: ID, Citizen Name, or Department..."
+              placeholder="Instant Search..."
               className="w-full pl-14 pr-6 py-4 bg-slate-50 rounded-2xl border-2 border-transparent text-sm font-bold outline-none focus:border-blue-500 focus:bg-white focus:ring-4 ring-blue-50 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -777,14 +775,17 @@ export default function AdminDashboard() {
                       <span>🛡️</span> Administrative Intelligence
                     </h4>
                     <div className="flex flex-wrap gap-3">
-                      <button
-                        onClick={() =>
-                          handleAdminAction(viewDetails.id, "REASSIGN")
-                        }
-                        className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                      >
-                        🔄 Reassign Officer
-                      </button>
+                      {/* 🚀 Updated Requirement: Reassign button only appears if status is escalated */}
+                      {viewDetails.status?.toLowerCase() === "escalated" && (
+                        <button
+                          onClick={() =>
+                            handleAdminAction(viewDetails.id, "REASSIGN")
+                          }
+                          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                        >
+                          🔄 Reassign Officer
+                        </button>
+                      )}
                       <button
                         onClick={() =>
                           handleAdminAction(viewDetails.id, "WARNING")
@@ -841,12 +842,12 @@ export default function AdminDashboard() {
                           Submit Resolution
                         </button>
                       </div>
+
+                      {/* 🚀 Updated Requirement: Rejected Section with Image Proof & Reason */}
                       <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4">
                         <h4 className="text-[11px] font-black text-red-700 uppercase flex items-center gap-2">
                           <span>🚫</span> Reject Request
                         </h4>
-
-                        {/* 📸 Rejection Proof Image Fetching/Uploading Setup */}
                         <div className="space-y-1">
                           <label className="text-[9px] font-black text-red-400 uppercase ml-2 tracking-widest">
                             Upload Rejection Proof
@@ -860,34 +861,28 @@ export default function AdminDashboard() {
                             />
                             {rejectFile && (
                               <p className="text-[8px] text-green-600 font-bold mt-1 ml-2 flex items-center gap-1">
-                                ✅ {rejectFile.name} ready for secure upload
+                                ✅ {rejectFile.name} ready
                               </p>
                             )}
                           </div>
                         </div>
-
-                        {/* ✍️ Rejection Reason Textarea */}
                         <textarea
-                          placeholder="State official reason for rejection..."
+                          placeholder="Reason for rejection..."
                           className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200 transition-all resize-none"
-                          value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
                         />
-
-                        {/* 🚀 Action Button */}
                         <button
                           onClick={() =>
                             handleUpdateStatus(viewDetails.id, "rejected")
                           }
-                          className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:bg-slate-300 disabled:shadow-none"
+                          className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:bg-slate-300"
                           disabled={!rejectReason || !rejectFile}
                         >
                           Confirm Denial & Notify
                         </button>
-
                         {!rejectFile && (
                           <p className="text-[8px] text-red-400 text-center font-bold italic">
-                            * Proof image is mandatory for rejection audit
+                            * Proof image mandatory
                           </p>
                         )}
                       </div>
@@ -924,6 +919,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
         {selectedImg && (
           <div
             className="fixed inset-0 bg-slate-950/95 z-[9999] flex items-center justify-center p-10 cursor-zoom-out animate-in fade-in duration-300"

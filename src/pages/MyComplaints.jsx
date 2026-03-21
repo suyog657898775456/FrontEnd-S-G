@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { fetchUserComplaints } from "../services/grievanceService";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
-// ✨ Added: Importing your existing feedback component
-import FeedbackForm from "../components/FeedbackForm";
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -303,7 +301,7 @@ export default function MyComplaints() {
 
               <StatusTimeline status={selectedComplaint.status} />
 
-              {/* 🚨 NEW FEATURE: Admin Rejection Insights Box */}
+              {/* Rejection Insights Box */}
               {selectedComplaint.status?.toLowerCase() === "rejected" && (
                 <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 space-y-4 animate-pulse">
                   <div className="flex justify-between items-center">
@@ -430,31 +428,27 @@ export default function MyComplaints() {
                 </div>
               </div>
 
-              {/* ✨ MODAL INTEGRATION: Feedback Form */}
-              {selectedComplaint.status?.toLowerCase() === "resolved" && (
-                <div className="pt-6 border-t border-slate-100">
-                  <div className="bg-emerald-50/30 p-6 rounded-[2.5rem] border-2 border-emerald-100">
-                    <h4 className="text-sm font-black text-emerald-800 uppercase mb-4 text-center tracking-widest">
-                      Service Experience Survey
-                    </h4>
-                    <FeedbackForm
-                      grievanceId={selectedComplaint.id}
-                      onSuccess={() => {
-                        alert("Feedback system synchronized!");
-                        setSelectedComplaint(null);
-                        loadData();
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
+              {/* Action Buttons Section */}
+              <div className="flex flex-col gap-4 pt-4 border-t border-slate-100">
+                {/* 🚀 New Conditional Logic: Show Feedback Link only when Resolved */}
+                {selectedComplaint.status?.toLowerCase() === "resolved" && (
+                  <button
+                    onClick={() =>
+                      navigate("/feedback", {
+                        state: { grievanceId: selectedComplaint.id },
+                      })
+                    }
+                    className="w-full bg-emerald-600 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    ⭐ Authenticate Service Quality
+                  </button>
+                )}
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-4 pt-4">
+                {/* PDF Download Button */}
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button
                     onClick={() => generateReceipt(selectedComplaint)}
-                    className="w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 border-2 border-emerald-500/30"
+                    className="w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 border-2 border-slate-700"
                   >
                     📄 Download Completion Receipt (PDF)
                   </button>
@@ -464,7 +458,7 @@ export default function MyComplaints() {
                   href={selectedComplaint.formatted_address || "#"}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full bg-slate-100 text-slate-800 p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-slate-200 transition-all"
+                  className="w-full bg-slate-100 text-slate-800 p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-3"
                 >
                   📍 View Location Insight
                 </a>

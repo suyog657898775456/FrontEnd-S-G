@@ -46,6 +46,7 @@ const MunicipalDashboard = () => {
     if (!path)
       return "https://via.placeholder.com/800x600?text=No+Image+Available";
     if (path.startsWith("http")) return path;
+    // Prefix backend host to relative paths
     return `http://127.0.0.1:8000${path.startsWith("/") ? "" : "/"}${path}`;
   };
 
@@ -108,15 +109,27 @@ const MunicipalDashboard = () => {
     }
   };
 
+  // 🚀 FIXED: handleStatusChange now avoids 400 error by passing necessary empty fields
   const handleStatusChange = async (id, newStatus) => {
-    if (newStatus === "rejected" || newStatus === "resolved") return; // Use the other function
+    if (newStatus === "rejected" || newStatus === "resolved") return;
     try {
       let statusToBackend = newStatus.toLowerCase().replace(" ", "_");
-      await updateComplaintStatus(id, statusToBackend);
+
+      // Sending empty strings for notes to satisfy strict backend serializers
+      const payload = {
+        status: statusToBackend,
+        resolution_note: "",
+        rejection_reason: "",
+      };
+
+      await API.patch(`grievances/officer/${id}/`, payload);
       loadData();
-      alert("Status Sync Successful");
+      alert(`✅ Status updated to ${newStatus.toUpperCase()}`);
+      if (viewDetails?.id === id)
+        setViewDetails({ ...viewDetails, status: statusToBackend });
     } catch (err) {
-      alert("Status sync failed.");
+      console.error("Status sync failed:", err.response?.data);
+      alert("Status sync failed. Check server console.");
     }
   };
 
@@ -195,7 +208,7 @@ const MunicipalDashboard = () => {
             <StatCard
               title="Active Queue"
               value={stats.pending}
-              color="bg-amber-500"
+              color="bg-amber-50"
               icon="⏳"
             />
             <StatCard
@@ -234,7 +247,7 @@ const MunicipalDashboard = () => {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase border-b">
+                <thead className="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
                   <tr>
                     <th className="px-8 py-6">Complaint ID</th>
                     <th className="px-8 py-6">Details</th>
@@ -420,6 +433,7 @@ const MunicipalDashboard = () => {
                     </div>
                   </div>
 
+                  {/* ✨ FIXED: Properly fetch and display Resolve/Reject Proof like Admin dashboard */}
                   {(viewDetails.after_image || viewDetails.rejection_proof) && (
                     <div className="relative">
                       <span
