@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API from "../services/api"; // 🚀 FIXED: Importing API instance
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -11,8 +12,6 @@ const ComplaintForm = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const API_URL = "http://127.0.0.1:8000/api/grievances/citizen/";
 
   const [formData, setFormData] = useState({
     title: "",
@@ -50,7 +49,7 @@ const ComplaintForm = () => {
     }
   }, []);
 
-  // ---------------- SUBMIT ----------------
+  // ---------------- SUBMIT (FIXED & CLEANED) ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -68,56 +67,34 @@ const ComplaintForm = () => {
 
     try {
       const data = new FormData();
-      // Saara text data append karein
-      Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-      // Image file append karein
-      if (image) data.append("image", image);
+      data.append("title", formData.title.trim());
+      data.append("description", formData.description.trim());
+      data.append("image", image);
+      data.append("latitude", formData.location.lat);
+      data.append("longitude", formData.location.lng);
 
-      const res = await API.post("grievances/citizen/", data);
+      // 🚀 Using professional API interceptor for automatic token handling
+      await API.post("grievances/citizen/", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       alert("✅ Complaint Submitted Successfully!");
-
-      // Optional: Form reset logic yahan daal sakte hain
-      // setFormData(initialState);
-      // setImage(null);
+      setIsSuccess(true);
+      setTimeout(() => navigate("/user-dashboard"), 2000);
     } catch (error) {
       if (error.response && error.response.status === 400) {
-        // 🚨 Blocked User check: Backend se aaya message dikhayega
-        alert(
-          `🚫 ACCESS DENIED: ${error.response.data.error || "Submission Failed"}`,
-        );
+        // Backend validation errors or Blocked User
+        const errorMsg =
+          error.response.data.error ||
+          error.response.data.detail ||
+          "Submission failed";
+        alert(`🚫 ACCESS DENIED: ${errorMsg}`);
       } else {
         alert(
           "❌ Error: Something went wrong. Please check your internet connection.",
         );
         console.error("Submission Error:", error);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-
-    const data = new FormData();
-    data.append("title", formData.title.trim());
-    data.append("description", formData.description.trim());
-    data.append("image", image);
-    data.append("latitude", formData.location.lat);
-    data.append("longitude", formData.location.lng);
-
-    const token = localStorage.getItem("access");
-
-    try {
-      await axios.post(API_URL, data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setIsSuccess(true);
-      setTimeout(() => navigate("/user-dashboard"), 2000);
-    } catch (error) {
-      console.error("Backend Error Details:", error.response?.data);
-      alert("Submission failed. Check your connection or server.");
     } finally {
       setIsSubmitting(false);
     }
@@ -149,10 +126,9 @@ const ComplaintForm = () => {
       setFormData((prev) => ({
         ...prev,
         description: validDesc,
-        title: prev.title || validTitle, // Agar title khali hai tabhi fill karega
+        title: prev.title || validTitle,
       }));
 
-      // Voice data handle karne ke baad transcript clear kar dein
       resetTranscript();
     }
   }, [listening, transcript, resetTranscript]);
@@ -220,8 +196,6 @@ const ComplaintForm = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* ❌ "Apply Text" button yahan se remove kar diya hai kyunki ab auto-fill hoga */}
-
               <button
                 type="button"
                 onClick={
@@ -267,7 +241,6 @@ const ComplaintForm = () => {
               <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                 Issue Title
               </label>
-              {/* Live Counter for Title */}
               <div
                 className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all duration-300 ${
                   getWordCount(formData.title) > 25
@@ -280,7 +253,7 @@ const ComplaintForm = () => {
             </div>
             <input
               type="text"
-              placeholder="Brief summary of the issue..."
+              placeholder="Brief summary..."
               required
               value={formData.title}
               className={`w-full p-4 bg-slate-50 border-2 rounded-2xl outline-none transition-all text-slate-800 text-sm font-bold ${
@@ -300,7 +273,6 @@ const ComplaintForm = () => {
               <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                 Description
               </label>
-              {/* Live Counter for Description */}
               <div
                 className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all duration-300 ${
                   getWordCount(formData.description) > 70
@@ -324,7 +296,6 @@ const ComplaintForm = () => {
                 setFormData({ ...formData, description: e.target.value })
               }
             />
-            {/* Warning Hint */}
             {(getWordCount(formData.title) > 25 ||
               getWordCount(formData.description) > 70) && (
               <p className="text-[10px] text-red-500 font-bold mt-2 animate-bounce">
@@ -332,6 +303,7 @@ const ComplaintForm = () => {
               </p>
             )}
           </div>
+
           {/* Photo Evidence */}
           <div className="group">
             <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 block">
@@ -362,7 +334,6 @@ const ComplaintForm = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting || !formData.location}
