@@ -93,12 +93,27 @@ const MunicipalDashboard = () => {
     }
 
     try {
-      await API.patch(`grievances/officer/${complaintId}/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      setLoading(true);
+      const res = await API.patch(
+        `grievances/officer/${complaintId}/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
+
       alert(`✅ Case marked as ${targetStatus.toUpperCase()}`);
-      loadData();
-      setViewDetails(null);
+
+      // 🔥 BUG FIX 1: Update Modal State immediately with new data (including image URL)
+      setViewDetails(res.data);
+
+      // 🔥 BUG FIX 2: Refresh background list after a short delay
+      setTimeout(() => {
+        loadData();
+        setLoading(false);
+      }, 500);
+
+      // Reset states
       setAfterImage(null);
       setRejectFile(null);
       setResNote("");
@@ -106,6 +121,7 @@ const MunicipalDashboard = () => {
     } catch (err) {
       console.error("Action Failed:", err.response?.data);
       alert("Submission failed. Check backend fields.");
+      setLoading(false);
     }
   };
 
@@ -463,20 +479,34 @@ const MunicipalDashboard = () => {
                       viewDetails.rejection_proof) && (
                       <div className="relative group animate-in slide-in-from-bottom-4 duration-500">
                         <span
-                          className={`absolute top-4 left-4 z-10 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg ${viewDetails.status === "resolved" ? "bg-emerald-600" : "bg-red-600"}`}
+                          className={`absolute top-4 left-4 z-10 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg ${
+                            viewDetails.status === "resolved"
+                              ? "bg-emerald-600"
+                              : "bg-red-600"
+                          }`}
                         >
                           {viewDetails.status === "resolved"
-                            ? "AFTER (Resolution Proof)"
+                            ? "AFTER (Work Proof)"
                             : "OFFICIAL REJECTION PROOF"}
                         </span>
                         <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                           <img
+                            // ✨ BUG FIX: key ensures the browser re-fetches the image once state changes
+                            key={
+                              viewDetails.after_image ||
+                              viewDetails.rejection_proof
+                            }
                             src={getFullImgUrl(
                               viewDetails.after_image ||
                                 viewDetails.rejection_proof,
                             )}
                             className="w-full h-full object-cover cursor-zoom-in"
                             alt="Authority proof"
+                            // Double check on load error
+                            onError={(e) => {
+                              e.target.src =
+                                "https://via.placeholder.com/400x300?text=Processing+Image...";
+                            }}
                             onClick={() =>
                               setSelectedImg(
                                 getFullImgUrl(
