@@ -42,7 +42,6 @@ export default function MyComplaints() {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     try {
-      // 1. Header Design
       doc.setFillColor(15, 42, 68); // Your theme color #0F2A44
       doc.rect(0, 0, pageWidth, 40, "F");
 
@@ -61,7 +60,6 @@ export default function MyComplaints() {
         { align: "center" },
       );
 
-      // 2. Metadata Section
       doc.setTextColor(40, 40, 40);
       doc.setFontSize(10);
       doc.text(`Receipt ID: SMC-RES-${complaint.id}`, 20, 55);
@@ -74,7 +72,6 @@ export default function MyComplaints() {
       doc.setDrawColor(200, 200, 200);
       doc.line(20, 60, pageWidth - 20, 60);
 
-      // 3. Citizen & Issue Details
       doc.setFont("helvetica", "bold");
       doc.text("CITIZEN DETAILS", 20, 70);
       doc.setFont("helvetica", "normal");
@@ -90,7 +87,6 @@ export default function MyComplaints() {
         90,
       );
 
-      // 4. Visual Evidence Section (Images)
       doc.setFont("helvetica", "bold");
       doc.text("VISUAL EVIDENCE LOG", 20, 105);
 
@@ -98,11 +94,13 @@ export default function MyComplaints() {
       const resolvedTask = complaint.department_tasks?.find(
         (t) => t.status === "resolved",
       );
+      // 🔥 Logical Update for PDF: Fetch from task or parent direct after_image
       const afterUrl = resolvedTask
         ? getFullImgUrl(resolvedTask.after_image)
-        : null;
+        : complaint.after_image
+          ? getFullImgUrl(complaint.after_image)
+          : null;
 
-      // Add Before Image
       if (beforeUrl) {
         const beforeImg = await getBase64ImageFromURL(beforeUrl);
         doc.addImage(beforeImg, "JPEG", 20, 110, 80, 50);
@@ -110,7 +108,6 @@ export default function MyComplaints() {
         doc.text("INITIAL REPORT IMAGE", 20, 165);
       }
 
-      // Add After Image
       if (afterUrl) {
         const afterImg = await getBase64ImageFromURL(afterUrl);
         doc.addImage(afterImg, "JPEG", 110, 110, 80, 50);
@@ -118,7 +115,6 @@ export default function MyComplaints() {
         doc.text("RESOLUTION PROOF IMAGE", 110, 165);
       }
 
-      // 5. Department Action Report
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text("DEPARTMENT ACTION REPORT", 20, 185);
@@ -139,7 +135,6 @@ export default function MyComplaints() {
         yPos += 8;
       });
 
-      // 6. Footer
       doc.setDrawColor(15, 42, 68);
       doc.line(20, 275, pageWidth - 20, 275);
       doc.setFontSize(8);
@@ -157,7 +152,6 @@ export default function MyComplaints() {
         { align: "center" },
       );
 
-      // Save
       doc.save(`Resolution_Receipt_${complaint.id}.pdf`);
     } catch (error) {
       console.error("PDF Generation Error:", error);
@@ -208,7 +202,6 @@ export default function MyComplaints() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 bg-[#F8FAFC] min-h-screen font-sans">
-      {/* Header */}
       <div className="mb-10 flex flex-col md:items-center text-center gap-4">
         <h2 className="text-4xl font-black text-[#0F2A44] tracking-tighter uppercase">
           My Reports
@@ -224,7 +217,6 @@ export default function MyComplaints() {
         />
       </div>
 
-      {/* Complaint Groups */}
       <div className="space-y-12">
         <ComplaintGroup
           title="🕒 Pending"
@@ -252,13 +244,11 @@ export default function MyComplaints() {
         />
       </div>
 
-      {/* ✨ Enhanced Detail Popup Modal */}
       {selectedComplaint && (
         <div className="fixed inset-0 bg-slate-900/90 z-[5000] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
             className={`bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300 border-t-[12px] ${selectedComplaint.status === "resolved" ? "border-emerald-500" : selectedComplaint.status === "rejected" ? "border-red-500" : "border-slate-900"}`}
           >
-            {/* Modal Header */}
             <div
               className={`${selectedComplaint.status === "resolved" ? "bg-emerald-50" : selectedComplaint.status === "rejected" ? "bg-red-50" : "bg-slate-50"} p-8 flex justify-between items-center border-b`}
             >
@@ -281,7 +271,6 @@ export default function MyComplaints() {
             </div>
 
             <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-              {/* Department Badges */}
               <div className="flex flex-wrap gap-2">
                 {Array.isArray(selectedComplaint.department) ? (
                   selectedComplaint.department.map((dept) => (
@@ -301,7 +290,6 @@ export default function MyComplaints() {
 
               <StatusTimeline status={selectedComplaint.status} />
 
-              {/* Rejection Insights Box */}
               {selectedComplaint.status?.toLowerCase() === "rejected" && (
                 <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 space-y-4 animate-pulse">
                   <div className="flex justify-between items-center">
@@ -342,7 +330,6 @@ export default function MyComplaints() {
               )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Side: Summary */}
                 <div className="space-y-6">
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">
@@ -370,70 +357,117 @@ export default function MyComplaints() {
                   </div>
                 </div>
 
-                {/* Right Side: Multi-Department Resolution Progress */}
                 <div className="space-y-4">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                     Department Proofs (Resolution)
                   </label>
-                  {selectedComplaint.department_tasks &&
-                  selectedComplaint.department_tasks.length > 0 ? (
-                    selectedComplaint.department_tasks.map((task, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-white rounded-3xl border-2 border-slate-50 shadow-sm space-y-3"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-black text-slate-800 uppercase">
-                            {task.department}
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${task.status === "resolved" ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}
-                          >
-                            {task.status}
-                          </span>
-                        </div>
-                        {task.status === "resolved" && (
-                          <div className="grid grid-cols-2 gap-2">
-                            {/* 📸 Task BEFORE Image with Fallback Logic */}
-                            <div className="relative group">
-                              <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
-                                Before Work
-                              </p>
-                              <img
-                                src={getFullImgUrl(
-                                  task.before_image || selectedComplaint.image,
-                                )}
-                                className="w-full h-24 object-cover rounded-xl border border-slate-100"
-                                alt="Before"
-                                onError={(e) =>
-                                  (e.target.src =
-                                    "https://via.placeholder.com/200x150?text=No+Before+Img")
-                                }
-                              />
+
+                  {/* 🔥 LOGIC: Handling Both Merged (Admin) and Single (Officer) Resolution Proofs */}
+                  {selectedComplaint.status?.toLowerCase() === "resolved" ? (
+                    <div className="space-y-4">
+                      {/* Scenario 1: Merged Complaint (Fetched from parent's after_image) */}
+                      {!selectedComplaint.department_tasks?.length &&
+                        selectedComplaint.after_image && (
+                          <div className="p-4 bg-white rounded-3xl border-2 border-slate-50 shadow-sm space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs font-black text-slate-800 uppercase">
+                                System Resolution (Merged)
+                              </span>
+                              <span className="px-2 py-0.5 rounded-lg text-[8px] font-black uppercase bg-green-100 text-green-600">
+                                Resolved
+                              </span>
                             </div>
-                            {/* 📸 Task AFTER Image */}
-                            <div className="relative group">
-                              <p className="text-[7px] font-black text-emerald-600 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
-                                After Work
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="relative group">
+                                <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                  Before Work
+                                </p>
+                                <img
+                                  src={getFullImgUrl(selectedComplaint.image)}
+                                  className="w-full h-24 object-cover rounded-xl border border-slate-100"
+                                  alt="Before"
+                                />
+                              </div>
+                              <div className="relative group">
+                                <p className="text-[7px] font-black text-emerald-600 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                  After Work
+                                </p>
+                                <img
+                                  src={getFullImgUrl(
+                                    selectedComplaint.after_image,
+                                  )}
+                                  className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
+                                  alt="After"
+                                />
+                              </div>
+                              <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                Note:{" "}
+                                {selectedComplaint.resolution_note ||
+                                  "Resolved by Municipal Administrator."}
                               </p>
-                              <img
-                                src={getFullImgUrl(task.after_image)}
-                                className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
-                                alt="After"
-                                onError={(e) =>
-                                  (e.target.src =
-                                    "https://via.placeholder.com/200x150?text=No+After+Img")
-                                }
-                              />
                             </div>
-                            <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                              Note:{" "}
-                              {task.resolution_note || "Resolved successfully"}
-                            </p>
                           </div>
                         )}
-                      </div>
-                    ))
+
+                      {/* Scenario 2: Normal/Mixed Complaint (Fetched from department_tasks) */}
+                      {selectedComplaint.department_tasks &&
+                      selectedComplaint.department_tasks.length > 0
+                        ? selectedComplaint.department_tasks.map(
+                            (task, idx) => (
+                              <div
+                                key={idx}
+                                className="p-4 bg-white rounded-3xl border-2 border-slate-50 shadow-sm space-y-3"
+                              >
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs font-black text-slate-800 uppercase">
+                                    {task.department}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase ${task.status === "resolved" ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"}`}
+                                  >
+                                    {task.status}
+                                  </span>
+                                </div>
+                                {task.status === "resolved" && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="relative group">
+                                      <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                        Before Work
+                                      </p>
+                                      <img
+                                        src={getFullImgUrl(
+                                          task.before_image ||
+                                            selectedComplaint.image,
+                                        )}
+                                        className="w-full h-24 object-cover rounded-xl border border-slate-100"
+                                        alt="Before"
+                                      />
+                                    </div>
+                                    <div className="relative group">
+                                      <p className="text-[7px] font-black text-emerald-600 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                        After Work
+                                      </p>
+                                      <img
+                                        src={getFullImgUrl(
+                                          task.after_image ||
+                                            selectedComplaint.after_image,
+                                        )}
+                                        className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
+                                        alt="After"
+                                      />
+                                    </div>
+                                    <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                      Note:{" "}
+                                      {task.resolution_note ||
+                                        "Resolved successfully"}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            ),
+                          )
+                        : null}
+                    </div>
                   ) : (
                     <div className="p-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                       <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">
@@ -444,7 +478,6 @@ export default function MyComplaints() {
                 </div>
               </div>
 
-              {/* Action Buttons Section */}
               <div className="flex flex-col gap-4 pt-4 border-t border-slate-100">
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button

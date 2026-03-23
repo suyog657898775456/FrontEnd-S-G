@@ -54,26 +54,46 @@ export const deleteGrievance = async (id) => {
   return response.data;
 };
 
-export const updateComplaintStatus = async (id, status) => {
+export const updateComplaintStatus = async (id, status, extraData = {}) => {
   const savedUser = JSON.parse(localStorage.getItem("user"));
-  // ✨ Logic: Ensures Admin hits admin path, Officer hits officer path
   const rolePath = savedUser?.role === "ADMIN" ? "admin" : "officer";
 
   let backendStatus = status.toLowerCase();
   if (backendStatus === "in progress") backendStatus = "in_progress";
 
+  // ✨ Logic: Hamesha FormData use karein kyunki Admin ko rejection proof (file) bhejni hai
+  const formData = new FormData();
+  formData.append("status", backendStatus);
+
+  // Rejection logic for Admin/Officer
+  if (backendStatus === "rejected") {
+    if (extraData.rejection_reason)
+      formData.append("rejection_reason", extraData.rejection_reason);
+    if (extraData.rejection_proof)
+      formData.append("rejection_proof", extraData.rejection_proof);
+  }
+
+  // General resolution note (optional)
+  if (extraData.resolution_note) {
+    formData.append("resolution_note", extraData.resolution_note);
+  }
+
   try {
-    const response = await API.patch(`grievances/${rolePath}/${id}/`, {
-      status: backendStatus,
-    });
+    const response = await API.patch(
+      `grievances/${rolePath}/${id}/`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
     return response.data;
   } catch (error) {
-    // Detailed error logging for debugging payload issues
-    console.error("Update Status Failed:", error.response?.data);
+    console.error("Update Status Failed Details:", error.response?.data);
     throw error;
   }
 };
-
 // --- ACTION APIS ---
 
 // ✨ FIXED: Added better Multipart handling

@@ -208,7 +208,7 @@ const MunicipalDashboard = () => {
             <StatCard
               title="Active Queue"
               value={stats.pending}
-              color="bg-amber-50 dark:bg-gray-900"
+              color="bg-yellow-600"
               icon="⏳"
             />
             <StatCard
@@ -298,15 +298,13 @@ const MunicipalDashboard = () => {
 
       {viewDetails && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden pointer-events-auto">
-          {/* ✨ Clean Dark Backdrop without Blur */}
           <div
             className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
             onClick={() => setViewDetails(null)}
           />
 
-          {/* ✨ Main Modal Container: Fixed overflow and max-height for proper structure */}
-          <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
-            {/* 🟢 Header Section: Fixed at Top */}
+          <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
+            {/* 🟢 Header Section */}
             <div className="bg-slate-900 p-8 text-white flex justify-between items-center shrink-0">
               <div>
                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
@@ -338,74 +336,104 @@ const MunicipalDashboard = () => {
                     </p>
                   </div>
 
+                  {/* 🚀 ACTION LOGIC: Only show if NOT finalized */}
                   {viewDetails.status !== "resolved" &&
                     viewDetails.status !== "rejected" && (
-                      <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 space-y-6 shadow-inner">
-                        <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-                          📸 Upload Resolution Proof
-                        </h4>
-                        <input
-                          type="file"
-                          onChange={(e) => setAfterImage(e.target.files[0])}
-                          className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black"
-                        />
-                        <textarea
-                          placeholder="Technical summary of work..."
-                          className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-28 border border-emerald-100"
-                          onChange={(e) => setResNote(e.target.value)}
-                        />
-                        <button
-                          onClick={() =>
-                            handleUpdateAction(viewDetails.id, "resolved")
-                          }
-                          className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
-                        >
-                          Submit Work Proof
-                        </button>
+                      <div className="space-y-6">
+                        {/* 1. Resolve Section - Needs after_image */}
+                        {viewDetails.status !== "rejected" && (
+                          <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 space-y-6 shadow-inner">
+                            <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                              📸 Submit Resolution Proof
+                            </h4>
+                            <input
+                              type="file"
+                              onChange={(e) => setAfterImage(e.target.files[0])}
+                              className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black file:cursor-pointer"
+                            />
+                            <textarea
+                              placeholder="Technical summary of work done..."
+                              className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-24 border border-emerald-100 focus:ring-2 ring-emerald-200"
+                              onChange={(e) => setResNote(e.target.value)}
+                            />
+                            <button
+                              onClick={() =>
+                                handleUpdateAction(viewDetails.id, "resolved")
+                              }
+                              className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
+                            >
+                              Verify & Close Case
+                            </button>
+                          </div>
+                        )}
+
+                        {/* 2. Reject Section - Needs rejection_proof */}
+                        {viewDetails.status !== "resolved" && (
+                          <div className="p-8 bg-red-50 rounded-[3rem] border border-red-100 space-y-6 shadow-inner">
+                            <h4 className="text-[10px] font-black text-red-700 uppercase tracking-widest flex items-center gap-2">
+                              🚫 Submit Rejection Proof
+                            </h4>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => setRejectFile(e.target.files[0])}
+                              className="text-[10px] block w-full file:bg-red-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black file:cursor-pointer"
+                            />
+                            <textarea
+                              placeholder="Reason for official rejection..."
+                              className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-20 border border-red-100 focus:ring-2 ring-red-200"
+                              onChange={(e) => setRejectReason(e.target.value)}
+                            />
+                            <button
+                              onClick={() =>
+                                handleUpdateAction(viewDetails.id, "rejected")
+                              }
+                              className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50"
+                              disabled={!rejectReason || !rejectFile}
+                            >
+                              Confirm Rejection
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
+                  {/* Final Authority Remarks Display */}
                   {(viewDetails.status === "resolved" ||
                     viewDetails.status === "rejected") && (
                     <div
                       className={`p-6 rounded-[2rem] border ${viewDetails.status === "resolved" ? "bg-emerald-50 border-emerald-100 text-emerald-800" : "bg-red-50 border-red-100 text-red-800"}`}
                     >
                       <label className="text-[10px] font-black uppercase block mb-2 tracking-widest opacity-60">
-                        Final Authority Remarks
+                        Authority Final Remarks
                       </label>
-                      <p className="text-sm italic font-medium">
+                      <p className="text-sm italic font-medium leading-relaxed">
                         "
                         {viewDetails.resolution_note ||
                           viewDetails.rejection_reason ||
-                          "Case closed successfully."}
+                          "Case finalized by Municipal Authority."}
                         "
                       </p>
                     </div>
                   )}
 
-                  <div className="pt-4 border-t border-slate-200/60">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button
-                        onClick={() =>
-                          handleStatusChange(viewDetails.id, "in_progress")
-                        }
-                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all"
-                      >
-                        🏗️ Mark In Progress
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleStatusChange(viewDetails.id, "rejected")
-                        }
-                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-red-500 hover:text-red-600 transition-all"
-                      >
-                        🚫 Reject Request
-                      </button>
-                    </div>
-                  </div>
+                  {/* Intermediate Status Update */}
+                  {viewDetails.status !== "resolved" &&
+                    viewDetails.status !== "rejected" && (
+                      <div className="pt-4 border-t border-slate-200/60">
+                        <button
+                          onClick={() =>
+                            handleStatusChange(viewDetails.id, "in_progress")
+                          }
+                          className="w-full bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all"
+                        >
+                          🏗️ Mark Task In Progress
+                        </button>
+                      </div>
+                    )}
                 </div>
 
-                {/* Right Column: Visual Evidence */}
+                {/* Right Column: Visual Evidence Analysis */}
                 <div className="space-y-6">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                     Visual Evidence Analysis
@@ -415,11 +443,11 @@ const MunicipalDashboard = () => {
                       <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg">
                         BEFORE
                       </span>
-                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                         <img
                           src={getFullImgUrl(viewDetails.image)}
-                          className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-500"
-                          alt="Reported state"
+                          className="w-full h-full object-cover cursor-zoom-in"
+                          alt="Initial report"
                           onClick={() =>
                             setSelectedImg(getFullImgUrl(viewDetails.image))
                           }
@@ -434,17 +462,17 @@ const MunicipalDashboard = () => {
                           className={`absolute top-4 left-4 z-10 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg ${viewDetails.status === "resolved" ? "bg-emerald-600" : "bg-red-600"}`}
                         >
                           {viewDetails.status === "resolved"
-                            ? "WORK PROOF"
+                            ? "WORK PROOF (AFTER)"
                             : "REJECTION PROOF"}
                         </span>
-                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                           <img
                             src={getFullImgUrl(
                               viewDetails.after_image ||
                                 viewDetails.rejection_proof,
                             )}
-                            className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-500"
-                            alt="Resolution proof"
+                            className="w-full h-full object-cover cursor-zoom-in"
+                            alt="Authority proof"
                             onClick={() =>
                               setSelectedImg(
                                 getFullImgUrl(

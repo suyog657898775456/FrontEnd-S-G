@@ -100,16 +100,33 @@ export default function AdminDashboard() {
   };
 
   const handleAdminAction = async (id, type) => {
-    const reason = prompt(`Enter reason for ${type}:`);
-    if (!reason) return;
+    // 1. User se reason maangein
+    const reason = prompt(`Enter official reason for ${type}:`);
+
+    // Agar user Cancel kar de ya khali chhode toh ruk jayein
+    if (!reason) {
+      alert("Action aborted: Reason is required.");
+      return;
+    }
 
     try {
+      // 2. Service call karein
       const res = await takeAdminAction(id, type, reason);
-      alert(`Success: ${res.message}`);
-      loadData(); // Refresh UI
+
+      // 3. Success handling
+      alert(
+        `✅ System Updated: ${res.message || "Action processed successfully"}`,
+      );
+      loadData();
       setViewDetails(null);
     } catch (error) {
-      alert("Action Failed: Check if ID is correct");
+      // 4. Error handling (Isse aapko pata chalega backend kyun mana kar raha hai)
+      console.error("Action Error:", error);
+      const serverError =
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        "Action Failed";
+      alert(`❌ Error: ${serverError}`);
     }
   };
 
@@ -225,6 +242,17 @@ export default function AdminDashboard() {
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
+    // 1. Double Check: Agar case pehle se finalized hai toh rok dein
+    if (
+      viewDetails.status === "resolved" ||
+      viewDetails.status === "rejected"
+    ) {
+      return alert(
+        `❌ Action Denied: This case is already ${viewDetails.status}.`,
+      );
+    }
+
+    // 2. Rejection Validation (Wahi logic jo aapne diya hai)
     if (newStatus === "rejected") {
       if (!rejectReason) return alert("Please provide a reason for rejection.");
       if (!rejectFile)
@@ -234,32 +262,44 @@ export default function AdminDashboard() {
     const formData = new FormData();
     formData.append("status", newStatus);
 
+    // 3. Data Mapping: As per your Postman/Backend requirements
     if (newStatus === "rejected") {
       formData.append("rejection_reason", rejectReason);
-      formData.append("rejection_proof", rejectFile); // Postman field name match
+      formData.append("rejection_proof", rejectFile);
+    } else if (newStatus === "resolved") {
+      // Agar Admin directly resolve kar raha hai
+      formData.append(
+        "resolution_note",
+        resNote || "Work completed and verified by Admin.",
+      );
+      if (resolvedFile) formData.append("after_image", resolvedFile);
     } else {
-      formData.append("resolution_note", "Updated by Admin");
+      formData.append("resolution_note", "Updated by Admin System");
     }
 
     try {
-      setIsSubmitting(true); // Loading state
+      setIsSubmitting(true);
 
-      // 🚀 Patch request with FormData
+      // 🚀 API Call: Admin Path
       await API.patch(`grievances/admin/${id}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      alert(`✅ System: Complaint marked as ${newStatus.replace("_", " ")}`);
+      alert(`✅ Success: Case #${id} marked as ${newStatus.replace("_", " ")}`);
+
+      // 4. UI Reset
       loadData();
       setViewDetails(null);
       setRejectReason("");
-      setRejectFile(null); // Reset file after success
+      setRejectFile(null);
+      setResolvedFile(null); // Clear resolved image too
     } catch (error) {
-      console.error("Update Error Details:", error.response?.data);
+      console.error("Critical Update Error:", error.response?.data);
       const errorMsg =
         error.response?.data?.rejection_reason?.[0] ||
+        error.response?.data?.after_image?.[0] ||
         error.response?.data?.detail ||
-        "Update failed.";
+        "Update failed due to server constraints.";
       alert(`❌ Error: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
@@ -744,117 +784,148 @@ export default function AdminDashboard() {
                       </p>
                     </div>
 
-                    {/* 🛡️ Administrative Intelligence Actions */}
-                    <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-dashed border-slate-200">
-                      <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                        <span>🛡️</span> Administrative Intelligence
-                      </h4>
-                      <div className="flex flex-wrap gap-3">
-                        {viewDetails.status?.toLowerCase() === "escalated" && (
-                          <button
-                            onClick={() =>
-                              handleAdminAction(viewDetails.id, "REASSIGN")
-                            }
-                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                          >
-                            🔄 Reassign Officer
-                          </button>
-                        )}
-                        <button
-                          onClick={() =>
-                            handleAdminAction(viewDetails.id, "WARNING")
-                          }
-                          className="bg-orange-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
-                        >
-                          ⚠️ Issue Warning
-                        </button>
-                        <button
-                          onClick={() => handleDelete(viewDetails.id)}
-                          className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-red-100 hover:bg-red-100 transition-all shadow-sm"
-                        >
-                          Terminate Record
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* ⚡ Rapid Operations Section */}
-                    <div className="space-y-4">
-                      <h4 className="text-[11px] font-black text-slate-800 uppercase flex items-center gap-2">
-                        <span>⚡</span> Rapid Operations
-                      </h4>
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          onClick={() =>
-                            handleUpdateStatus(viewDetails.id, "in_progress")
-                          }
-                          className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-amber-200 hover:bg-amber-200 transition-all shadow-sm"
-                        >
-                          Mark In Progress
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 🚀 Dual Action Grid: Resolve & Reject (Both Visible) */}
-                    {viewDetails.status !== "resolved" && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* 1. Resolve Section */}
-                        <div className="p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 space-y-4 shadow-sm">
-                          <h4 className="text-[11px] font-black text-emerald-700 uppercase">
-                            Resolve Case
+                    {/* 🛡️ Administrative Intelligence Actions - Hidden if Resolved/Rejected */}
+                    {viewDetails.status !== "resolved" &&
+                      viewDetails.status !== "rejected" && (
+                        <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-dashed border-slate-200">
+                          <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                            <span>🛡️</span> Administrative Intelligence
                           </h4>
-                          <input
-                            type="file"
-                            className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-emerald-600 file:text-white"
-                            onChange={(e) => setResolvedFile(e.target.files[0])}
-                          />
-                          <textarea
-                            placeholder="Resolution final note..."
-                            className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-emerald-100 shadow-sm focus:ring-2 ring-emerald-200"
-                            onChange={(e) => setResNote(e.target.value)}
-                          />
-                          <button
-                            onClick={() =>
-                              handleResolveWithPhoto(viewDetails.id)
-                            }
-                            className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-700 shadow-lg transition-all"
-                          >
-                            Submit Resolution
-                          </button>
+                          <div className="flex flex-wrap gap-3">
+                            {viewDetails.status?.toLowerCase() ===
+                              "escalated" && (
+                              <button
+                                onClick={() =>
+                                  handleAdminAction(viewDetails.id, "REASSIGN")
+                                }
+                                className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                              >
+                                🔄 Reassign Officer
+                              </button>
+                            )}
+                            <button
+                              onClick={() =>
+                                handleAdminAction(viewDetails.id, "WARNING")
+                              }
+                              className="bg-orange-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
+                            >
+                              ⚠️ Issue Warning
+                            </button>
+                            <button
+                              onClick={() => handleDelete(viewDetails.id)}
+                              className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-red-100 hover:bg-red-100 transition-all shadow-sm"
+                            >
+                              Terminate Record
+                            </button>
+                          </div>
                         </div>
+                      )}
 
-                        {/* 2. Reject Section */}
-                        <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4 shadow-sm">
-                          <h4 className="text-[11px] font-black text-red-700 uppercase">
-                            Reject Request
+                    {/* ⚡ Rapid Operations Section - Hidden if Resolved/Rejected */}
+                    {viewDetails.status !== "resolved" &&
+                      viewDetails.status !== "rejected" && (
+                        <div className="space-y-4">
+                          <h4 className="text-[11px] font-black text-slate-800 uppercase flex items-center gap-2">
+                            <span>⚡</span> Rapid Operations
                           </h4>
-                          <div className="space-y-1">
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(
+                                  viewDetails.id,
+                                  "in_progress",
+                                )
+                              }
+                              className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-amber-200 hover:bg-amber-200 transition-all shadow-sm"
+                            >
+                              Mark In Progress
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    {/* 🚀 Dual Action Grid: Resolve & Reject (Logic Updated) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* 1. Resolve Section - Hide if status is rejected OR already resolved */}
+                      {viewDetails.status !== "rejected" &&
+                        viewDetails.status !== "resolved" && (
+                          <div className="p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 space-y-4 shadow-sm">
+                            <h4 className="text-[11px] font-black text-emerald-700 uppercase">
+                              Resolve Case
+                            </h4>
                             <input
                               type="file"
-                              accept="image/*"
-                              className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-red-600 file:text-white"
-                              onChange={(e) => setRejectFile(e.target.files[0])}
+                              className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-emerald-600 file:text-white"
+                              onChange={(e) =>
+                                setResolvedFile(e.target.files[0])
+                              }
                             />
-                            {rejectFile && (
-                              <p className="text-[8px] text-green-600 font-bold mt-1 ml-2">
-                                ✅ {rejectFile.name} ready
-                              </p>
-                            )}
+                            <textarea
+                              placeholder="Resolution final note..."
+                              className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-emerald-100 shadow-sm focus:ring-2 ring-emerald-200"
+                              onChange={(e) => setResNote(e.target.value)}
+                            />
+                            <button
+                              onClick={() =>
+                                handleResolveWithPhoto(viewDetails.id)
+                              }
+                              className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-700 shadow-lg transition-all"
+                            >
+                              Submit Resolution
+                            </button>
                           </div>
-                          <textarea
-                            placeholder="Reason for rejection..."
-                            className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200"
-                            onChange={(e) => setRejectReason(e.target.value)}
-                          />
-                          <button
-                            onClick={() =>
-                              handleUpdateStatus(viewDetails.id, "rejected")
-                            }
-                            className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg transition-all disabled:bg-slate-300"
-                            disabled={!rejectReason || !rejectFile}
-                          >
-                            Confirm Denial
-                          </button>
-                        </div>
+                        )}
+
+                      {/* 2. Reject Section - Hide if status is resolved OR already rejected */}
+                      {viewDetails.status !== "resolved" &&
+                        viewDetails.status !== "rejected" && (
+                          <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4 shadow-sm">
+                            <h4 className="text-[11px] font-black text-red-700 uppercase">
+                              Reject Request
+                            </h4>
+                            <div className="space-y-1">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-red-600 file:text-white"
+                                onChange={(e) =>
+                                  setRejectFile(e.target.files[0])
+                                }
+                              />
+                              {rejectFile && (
+                                <p className="text-[8px] text-green-600 font-bold mt-1 ml-2">
+                                  ✅ {rejectFile.name} ready
+                                </p>
+                              )}
+                            </div>
+                            <textarea
+                              placeholder="Reason for rejection..."
+                              className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200"
+                              onChange={(e) => setRejectReason(e.target.value)}
+                            />
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(viewDetails.id, "rejected")
+                              }
+                              className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg transition-all disabled:bg-slate-300"
+                              disabled={!rejectReason || !rejectFile}
+                            >
+                              Confirm Denial
+                            </button>
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Finalized Status Message - Appears when Case is Closed */}
+                    {(viewDetails.status === "resolved" ||
+                      viewDetails.status === "rejected") && (
+                      <div
+                        className={`p-6 rounded-[2rem] border text-center font-black uppercase tracking-widest ${viewDetails.status === "resolved" ? "bg-emerald-100 text-emerald-800 border-emerald-200" : "bg-red-100 text-red-800 border-red-200"}`}
+                      >
+                        Case is {viewDetails.status}
+                        <p className="text-[9px] normal-case font-medium mt-1 opacity-70">
+                          This record is locked for further modifications.
+                        </p>
                       </div>
                     )}
                   </div>
