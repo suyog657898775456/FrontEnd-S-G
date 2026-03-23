@@ -298,11 +298,13 @@ const MunicipalDashboard = () => {
 
       {viewDetails && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden pointer-events-auto">
+          {/* ✨ Clean Dark Backdrop */}
           <div
             className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
             onClick={() => setViewDetails(null)}
           />
 
+          {/* ✨ Main Modal Container */}
           <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
             {/* 🟢 Header Section */}
             <div className="bg-slate-900 p-8 text-white flex justify-between items-center shrink-0">
@@ -336,15 +338,15 @@ const MunicipalDashboard = () => {
                     </p>
                   </div>
 
-                  {/* 🚀 ACTION LOGIC: Only show if NOT finalized */}
+                  {/* 🚀 ACTION LOGIC: Mutual Exclusion (Only show if NOT finalized) */}
                   {viewDetails.status !== "resolved" &&
                     viewDetails.status !== "rejected" && (
                       <div className="space-y-6">
-                        {/* 1. Resolve Section - Needs after_image */}
+                        {/* 1. Resolve Work Section (Hide if Rejected) */}
                         {viewDetails.status !== "rejected" && (
                           <div className="p-8 bg-emerald-50 rounded-[3rem] border border-emerald-100 space-y-6 shadow-inner">
-                            <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest flex items-center gap-2">
-                              📸 Submit Resolution Proof
+                            <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                              📸 Submit Resolution Proof (After Image)
                             </h4>
                             <input
                               type="file"
@@ -362,16 +364,16 @@ const MunicipalDashboard = () => {
                               }
                               className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all active:scale-95"
                             >
-                              Verify & Close Case
+                              Submit Resolution Proof
                             </button>
                           </div>
                         )}
 
-                        {/* 2. Reject Section - Needs rejection_proof */}
+                        {/* 2. Reject Section (Hide if Resolved) */}
                         {viewDetails.status !== "resolved" && (
                           <div className="p-8 bg-red-50 rounded-[3rem] border border-red-100 space-y-6 shadow-inner">
-                            <h4 className="text-[10px] font-black text-red-700 uppercase tracking-widest flex items-center gap-2">
-                              🚫 Submit Rejection Proof
+                            <h4 className="text-[10px] font-black text-red-700 uppercase tracking-widest">
+                              🚫 Reject Request with Proof
                             </h4>
                             <input
                               type="file"
@@ -380,7 +382,7 @@ const MunicipalDashboard = () => {
                               className="text-[10px] block w-full file:bg-red-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black file:cursor-pointer"
                             />
                             <textarea
-                              placeholder="Reason for official rejection..."
+                              placeholder="Official reason for rejection..."
                               className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-20 border border-red-100 focus:ring-2 ring-red-200"
                               onChange={(e) => setRejectReason(e.target.value)}
                             />
@@ -398,7 +400,7 @@ const MunicipalDashboard = () => {
                       </div>
                     )}
 
-                  {/* Final Authority Remarks Display */}
+                  {/* Display Authority Remarks if Finalized */}
                   {(viewDetails.status === "resolved" ||
                     viewDetails.status === "rejected") && (
                     <div
@@ -433,15 +435,16 @@ const MunicipalDashboard = () => {
                     )}
                 </div>
 
-                {/* Right Column: Visual Evidence Analysis */}
+                {/* Right Column: Visual Evidence Analysis (BEFORE & AFTER) */}
                 <div className="space-y-6">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                    Visual Evidence Analysis
+                    Visual Evidence Verification
                   </label>
                   <div className="space-y-6">
+                    {/* BEFORE IMAGE */}
                     <div className="relative group">
                       <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg">
-                        BEFORE
+                        BEFORE (Original Report)
                       </span>
                       <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                         <img
@@ -455,15 +458,16 @@ const MunicipalDashboard = () => {
                       </div>
                     </div>
 
+                    {/* AFTER IMAGE / REJECTION PROOF */}
                     {(viewDetails.after_image ||
                       viewDetails.rejection_proof) && (
-                      <div className="relative group">
+                      <div className="relative group animate-in slide-in-from-bottom-4 duration-500">
                         <span
                           className={`absolute top-4 left-4 z-10 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg ${viewDetails.status === "resolved" ? "bg-emerald-600" : "bg-red-600"}`}
                         >
                           {viewDetails.status === "resolved"
-                            ? "WORK PROOF (AFTER)"
-                            : "REJECTION PROOF"}
+                            ? "AFTER (Resolution Proof)"
+                            : "OFFICIAL REJECTION PROOF"}
                         </span>
                         <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                           <img
@@ -491,7 +495,7 @@ const MunicipalDashboard = () => {
                     href={viewDetails.formatted_address}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all active:scale-95"
+                    className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all active:scale-95"
                   >
                     📍 GPS Intelligence View
                   </a>
