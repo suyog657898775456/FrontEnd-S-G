@@ -208,7 +208,7 @@ const MunicipalDashboard = () => {
             <StatCard
               title="Active Queue"
               value={stats.pending}
-              color="bg-amber-50"
+              color="bg-amber-50 dark:bg-gray-900"
               icon="⏳"
             />
             <StatCard
@@ -297,17 +297,17 @@ const MunicipalDashboard = () => {
       )}
 
       {viewDetails && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
-          {/* ✨ Premium Backdrop: Added heavy blur to fix navbar transparency glitch */}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden pointer-events-auto">
+          {/* ✨ Clean Dark Backdrop without Blur */}
           <div
-            className="absolute inset-0 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-300"
+            className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
             onClick={() => setViewDetails(null)}
           />
 
-          {/* ✨ Main Modal Container: Fixed overflow and max-height for better structure */}
-          <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4">
-            {/* 🟢 Header Section: Properly Fixed at Top */}
-            <div className="bg-slate-900 p-8 text-white flex justify-between items-center shrink-0 border-b border-white/10">
+          {/* ✨ Main Modal Container: Fixed overflow and max-height for proper structure */}
+          <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
+            {/* 🟢 Header Section: Fixed at Top */}
+            <div className="bg-slate-900 p-8 text-white flex justify-between items-center shrink-0">
               <div>
                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">
                   Grievance Authority Terminal
@@ -324,7 +324,7 @@ const MunicipalDashboard = () => {
               </button>
             </div>
 
-            {/* 🔵 Scrollable Content Area: Optimized custom scrollbar */}
+            {/* 🔵 Scrollable Content Area */}
             <div className="p-8 lg:p-12 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 {/* Left Column: Descriptions & Actions */}
@@ -347,11 +347,11 @@ const MunicipalDashboard = () => {
                         <input
                           type="file"
                           onChange={(e) => setAfterImage(e.target.files[0])}
-                          className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black file:cursor-pointer"
+                          className="text-[10px] block w-full file:bg-emerald-600 file:text-white file:border-none file:px-4 file:py-2 file:rounded-full file:font-black"
                         />
                         <textarea
                           placeholder="Technical summary of work..."
-                          className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-28 border border-emerald-100 focus:ring-2 ring-emerald-200 transition-all"
+                          className="w-full p-4 text-sm rounded-2xl outline-none shadow-sm h-28 border border-emerald-100"
                           onChange={(e) => setResNote(e.target.value)}
                         />
                         <button
@@ -373,7 +373,7 @@ const MunicipalDashboard = () => {
                       <label className="text-[10px] font-black uppercase block mb-2 tracking-widest opacity-60">
                         Final Authority Remarks
                       </label>
-                      <p className="text-sm italic font-medium leading-relaxed">
+                      <p className="text-sm italic font-medium">
                         "
                         {viewDetails.resolution_note ||
                           viewDetails.rejection_reason ||
@@ -389,7 +389,7 @@ const MunicipalDashboard = () => {
                         onClick={() =>
                           handleStatusChange(viewDetails.id, "in_progress")
                         }
-                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-2"
+                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all"
                       >
                         🏗️ Mark In Progress
                       </button>
@@ -397,7 +397,7 @@ const MunicipalDashboard = () => {
                         onClick={() =>
                           handleStatusChange(viewDetails.id, "rejected")
                         }
-                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-red-500 hover:text-red-600 transition-all flex items-center justify-center gap-2"
+                        className="bg-white border-2 border-slate-200 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-red-500 hover:text-red-600 transition-all"
                       >
                         🚫 Reject Request
                       </button>
@@ -415,10 +415,10 @@ const MunicipalDashboard = () => {
                       <span className="absolute top-4 left-4 z-10 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded uppercase shadow-lg">
                         BEFORE
                       </span>
-                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
+                      <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                         <img
                           src={getFullImgUrl(viewDetails.image)}
-                          className="w-full h-full object-cover cursor-zoom-in"
+                          className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-500"
                           alt="Reported state"
                           onClick={() =>
                             setSelectedImg(getFullImgUrl(viewDetails.image))
@@ -437,13 +437,13 @@ const MunicipalDashboard = () => {
                             ? "WORK PROOF"
                             : "REJECTION PROOF"}
                         </span>
-                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
+                        <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100">
                           <img
                             src={getFullImgUrl(
                               viewDetails.after_image ||
                                 viewDetails.rejection_proof,
                             )}
-                            className="w-full h-full object-cover cursor-zoom-in"
+                            className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-500"
                             alt="Resolution proof"
                             onClick={() =>
                               setSelectedImg(
@@ -463,7 +463,7 @@ const MunicipalDashboard = () => {
                     href={viewDetails.formatted_address}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all hover:shadow-blue-200 active:scale-95"
+                    className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all active:scale-95"
                   >
                     📍 GPS Intelligence View
                   </a>
