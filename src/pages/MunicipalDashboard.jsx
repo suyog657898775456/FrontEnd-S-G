@@ -76,52 +76,56 @@ const MunicipalDashboard = () => {
   };
 
   // ✨ Unified Update Logic (Supports Resolve & Reject with Proof)
+  // ✨ Unified Update Logic (Supports Resolve & Reject with Proof)
   const handleUpdateAction = async (complaintId, targetStatus) => {
     const formData = new FormData();
     formData.append("status", targetStatus);
 
     if (targetStatus === "resolved") {
-      if (!afterImage || !resNote)
-        return alert("Upload Work Image & Resolution Note!");
+      if (!afterImage || !resNote) {
+        alert("Upload Work Image & Resolution Note!");
+        return;
+      }
       formData.append("after_image", afterImage);
       formData.append("resolution_note", resNote);
-    } else if (targetStatus === "rejected") {
-      if (!rejectReason || !rejectFile)
-        return alert("Provide Rejection Reason & Proof Image!");
+    }
+
+    if (targetStatus === "rejected") {
+      if (!rejectReason || !rejectFile) {
+        alert("Provide Rejection Reason & Proof Image!");
+        return;
+      }
       formData.append("rejection_reason", rejectReason);
       formData.append("rejection_proof", rejectFile);
     }
 
     try {
-      setLoading(true);
       const res = await API.patch(
         `grievances/officer/${complaintId}/`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
+        // ❌ REMOVED HEADERS (IMPORTANT FIX)
       );
 
-      alert(`✅ Case marked as ${targetStatus.toUpperCase()}`);
+      console.log("🔥 API RESPONSE:", res.data);
 
-      // 🔥 BUG FIX 1: Update Modal State immediately with new data (including image URL)
+      // 🔥 Update modal instantly
       setViewDetails(res.data);
 
-      // 🔥 BUG FIX 2: Refresh background list after a short delay
+      // 🔥 Refresh list
       setTimeout(() => {
         loadData();
-        setLoading(false);
-      }, 500);
+      }, 300);
 
-      // Reset states
+      // 🔥 Reset states
       setAfterImage(null);
       setRejectFile(null);
       setResNote("");
       setRejectReason("");
+
+      alert(`✅ Case marked as ${targetStatus.toUpperCase()}`);
     } catch (err) {
       console.error("Action Failed:", err.response?.data);
-      alert("Submission failed. Check backend fields.");
-      setLoading(false);
+      alert("Submission failed. Check backend.");
     }
   };
 
@@ -491,7 +495,6 @@ const MunicipalDashboard = () => {
                         </span>
                         <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-slate-100 group-hover:scale-[1.02] transition-transform duration-500">
                           <img
-                            // ✨ BUG FIX: key ensures the browser re-fetches the image once state changes
                             key={
                               viewDetails.after_image ||
                               viewDetails.rejection_proof

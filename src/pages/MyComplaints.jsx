@@ -518,6 +518,7 @@ export default function MyComplaints() {
   );
 }
 
+
 function ComplaintGroup({ title, data, color, onCardClick }) {
   if (data.length === 0) return null;
   const colors = {
