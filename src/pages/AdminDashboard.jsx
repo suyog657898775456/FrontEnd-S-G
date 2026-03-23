@@ -703,9 +703,17 @@ export default function AdminDashboard() {
         </div>
 
         {viewDetails && (
-          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[5000] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col my-auto">
-              <div className="bg-slate-900 p-8 text-white flex justify-between items-center">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
+            {/* Clean Dark Backdrop (No Blur as requested) */}
+            <div
+              className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
+              onClick={() => setViewDetails(null)}
+            />
+
+            {/* Main Popup Container */}
+            <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
+              {/* 🟢 Header Section */}
+              <div className="bg-slate-900 p-8 text-white flex justify-between items-center shrink-0">
                 <div>
                   <h3 className="text-xl font-black uppercase tracking-tight">
                     Case Intelligence Center
@@ -716,204 +724,167 @@ export default function AdminDashboard() {
                 </div>
                 <button
                   onClick={() => setViewDetails(null)}
-                  className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-red-500 transition-all text-2xl font-light"
+                  className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-red-500 text-2xl transition-all flex items-center justify-center active:scale-90"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="p-8 grid grid-cols-1 lg:grid-cols-5 gap-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                <div className="lg:col-span-3 space-y-8">
-                  <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">
-                      Issue Description
-                    </label>
-                    <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                      "{viewDetails.description}"
-                    </p>
-                  </div>
-
-                  {viewDetails.total_reports > 1 && (
-                    <div className="bg-blue-50/50 p-6 rounded-[2.5rem] border border-blue-100/50 space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <span className="p-1 bg-blue-100 rounded-md">👥</span>{" "}
-                          Impact Network
-                        </h4>
-                        <span className="text-[9px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full animate-pulse">
-                          {viewDetails.total_reports} CITIZENS AFFECTED
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                        <div className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-blue-50 shadow-sm">
-                          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black italic">
-                            PR
-                          </div>
-                          <div>
-                            <p className="text-[11px] font-bold text-slate-800 leading-none">
-                              {viewDetails.citizen_name}
-                            </p>
-                            <span className="text-[9px] text-slate-400 font-black uppercase">
-                              Primary Reporter
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 bg-white/60 p-3 rounded-2xl border border-dashed border-blue-200">
-                          <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black">
-                            +{viewDetails.total_reports - 1}
-                          </div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter italic">
-                            Identical reports merged by AI
-                          </p>
-                        </div>
-                      </div>
+              {/* 🔵 Scrollable Content Area */}
+              <div className="p-8 lg:p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+                  {/* Left Side: Actions & Descriptions (Col span 3) */}
+                  <div className="lg:col-span-3 space-y-8">
+                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">
+                        Issue Description
+                      </label>
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                        "{viewDetails.description}"
+                      </p>
                     </div>
-                  )}
 
-                  <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-dashed border-slate-200">
-                    <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                      <span>🛡️</span> Administrative Intelligence
-                    </h4>
-                    <div className="flex flex-wrap gap-3">
-                      {/* 🚀 Updated Requirement: Reassign button only appears if status is escalated */}
-                      {viewDetails.status?.toLowerCase() === "escalated" && (
+                    {/* 🛡️ Administrative Intelligence Actions */}
+                    <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-dashed border-slate-200">
+                      <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                        <span>🛡️</span> Administrative Intelligence
+                      </h4>
+                      <div className="flex flex-wrap gap-3">
+                        {viewDetails.status?.toLowerCase() === "escalated" && (
+                          <button
+                            onClick={() =>
+                              handleAdminAction(viewDetails.id, "REASSIGN")
+                            }
+                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                          >
+                            🔄 Reassign Officer
+                          </button>
+                        )}
                         <button
                           onClick={() =>
-                            handleAdminAction(viewDetails.id, "REASSIGN")
+                            handleAdminAction(viewDetails.id, "WARNING")
                           }
-                          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                          className="bg-orange-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
                         >
-                          🔄 Reassign Officer
+                          ⚠️ Issue Warning
                         </button>
-                      )}
-                      <button
-                        onClick={() =>
-                          handleAdminAction(viewDetails.id, "WARNING")
-                        }
-                        className="bg-orange-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-orange-600 transition-all shadow-lg shadow-orange-100"
-                      >
-                        ⚠️ Issue Warning
-                      </button>
-                      <button
-                        onClick={() => handleDelete(viewDetails.id)}
-                        className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-red-100 hover:bg-red-100 transition-all shadow-sm"
-                      >
-                        Terminate Record
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h4 className="text-[11px] font-black text-slate-800 uppercase flex items-center gap-2">
-                      <span>⚡</span> Rapid Operations
-                    </h4>
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        onClick={() =>
-                          handleUpdateStatus(viewDetails.id, "in_progress")
-                        }
-                        className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-amber-200 hover:bg-amber-200 transition-all shadow-sm"
-                      >
-                        Mark In Progress
-                      </button>
-                    </div>
-                  </div>
-
-                  {viewDetails.status !== "resolved" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 space-y-4">
-                        <h4 className="text-[11px] font-black text-emerald-700 uppercase">
-                          Resolve Case
-                        </h4>
-                        <input
-                          type="file"
-                          className="text-[9px] block w-full text-slate-400"
-                          onChange={(e) => setResolvedFile(e.target.files[0])}
-                        />
-                        <textarea
-                          placeholder="Resolution final note..."
-                          className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-emerald-100 shadow-sm"
-                          onChange={(e) => setResNote(e.target.value)}
-                        />
                         <button
-                          onClick={() => handleResolveWithPhoto(viewDetails.id)}
-                          className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+                          onClick={() => handleDelete(viewDetails.id)}
+                          className="bg-red-50 text-red-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-red-100 hover:bg-red-100 transition-all shadow-sm"
                         >
-                          Submit Resolution
+                          Terminate Record
                         </button>
                       </div>
+                    </div>
 
-                      {/* 🚀 Updated Requirement: Rejected Section with Image Proof & Reason */}
-                      <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4">
-                        <h4 className="text-[11px] font-black text-red-700 uppercase flex items-center gap-2">
-                          <span>🚫</span> Reject Request
-                        </h4>
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black text-red-400 uppercase ml-2 tracking-widest">
-                            Upload Rejection Proof
-                          </label>
-                          <div className="relative border-2 border-dashed border-red-200 rounded-2xl bg-white/50 p-2 transition-all hover:bg-white">
+                    {/* ⚡ Rapid Operations Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-[11px] font-black text-slate-800 uppercase flex items-center gap-2">
+                        <span>⚡</span> Rapid Operations
+                      </h4>
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() =>
+                            handleUpdateStatus(viewDetails.id, "in_progress")
+                          }
+                          className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-amber-200 hover:bg-amber-200 transition-all shadow-sm"
+                        >
+                          Mark In Progress
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 🚀 Dual Action Grid: Resolve & Reject (Both Visible) */}
+                    {viewDetails.status !== "resolved" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* 1. Resolve Section */}
+                        <div className="p-6 bg-emerald-50 rounded-[2.5rem] border border-emerald-100 space-y-4 shadow-sm">
+                          <h4 className="text-[11px] font-black text-emerald-700 uppercase">
+                            Resolve Case
+                          </h4>
+                          <input
+                            type="file"
+                            className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-emerald-600 file:text-white"
+                            onChange={(e) => setResolvedFile(e.target.files[0])}
+                          />
+                          <textarea
+                            placeholder="Resolution final note..."
+                            className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-emerald-100 shadow-sm focus:ring-2 ring-emerald-200"
+                            onChange={(e) => setResNote(e.target.value)}
+                          />
+                          <button
+                            onClick={() =>
+                              handleResolveWithPhoto(viewDetails.id)
+                            }
+                            className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-700 shadow-lg transition-all"
+                          >
+                            Submit Resolution
+                          </button>
+                        </div>
+
+                        {/* 2. Reject Section */}
+                        <div className="p-6 bg-red-50 rounded-[2.5rem] border border-red-100 space-y-4 shadow-sm">
+                          <h4 className="text-[11px] font-black text-red-700 uppercase">
+                            Reject Request
+                          </h4>
+                          <div className="space-y-1">
                             <input
                               type="file"
                               accept="image/*"
-                              className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer"
+                              className="text-[9px] block w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[9px] file:font-black file:bg-red-600 file:text-white"
                               onChange={(e) => setRejectFile(e.target.files[0])}
                             />
                             {rejectFile && (
-                              <p className="text-[8px] text-green-600 font-bold mt-1 ml-2 flex items-center gap-1">
+                              <p className="text-[8px] text-green-600 font-bold mt-1 ml-2">
                                 ✅ {rejectFile.name} ready
                               </p>
                             )}
                           </div>
+                          <textarea
+                            placeholder="Reason for rejection..."
+                            className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200"
+                            onChange={(e) => setRejectReason(e.target.value)}
+                          />
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(viewDetails.id, "rejected")
+                            }
+                            className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg transition-all disabled:bg-slate-300"
+                            disabled={!rejectReason || !rejectFile}
+                          >
+                            Confirm Denial
+                          </button>
                         </div>
-                        <textarea
-                          placeholder="Reason for rejection..."
-                          className="w-full p-4 text-xs rounded-2xl h-20 outline-none border border-red-100 shadow-sm focus:ring-2 ring-red-200 transition-all resize-none"
-                          onChange={(e) => setRejectReason(e.target.value)}
-                        />
-                        <button
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Side: Visual Evidence & Map Link (Col span 2) */}
+                  <div className="lg:col-span-2 space-y-8">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
+                        Primary Citizen Evidence
+                      </label>
+                      <div className="w-full aspect-square rounded-[3rem] overflow-hidden border-8 border-white shadow-2xl bg-slate-100 relative group">
+                        <img
+                          src={getFullImgUrl(viewDetails.image)}
+                          className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-700"
+                          alt="Incident"
                           onClick={() =>
-                            handleUpdateStatus(viewDetails.id, "rejected")
+                            setSelectedImg(getFullImgUrl(viewDetails.image))
                           }
-                          className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-red-700 shadow-lg shadow-red-100 transition-all active:scale-95 disabled:bg-slate-300"
-                          disabled={!rejectReason || !rejectFile}
-                        >
-                          Confirm Denial & Notify
-                        </button>
-                        {!rejectFile && (
-                          <p className="text-[8px] text-red-400 text-center font-bold italic">
-                            * Proof image mandatory
-                          </p>
-                        )}
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="lg:col-span-2 space-y-8">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
-                      Primary Citizen Evidence
-                    </label>
-                    <div className="w-full aspect-square rounded-[3rem] overflow-hidden border-8 border-slate-50 shadow-2xl bg-slate-100 relative group">
-                      <img
-                        src={getFullImgUrl(viewDetails.image)}
-                        className="w-full h-full object-cover cursor-zoom-in group-hover:scale-105 transition-transform duration-700"
-                        alt="Incident"
-                        onClick={() =>
-                          setSelectedImg(getFullImgUrl(viewDetails.image))
-                        }
-                      />
-                    </div>
+                    <a
+                      href={viewDetails.formatted_address}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-blue-600 transition-all active:scale-95"
+                    >
+                      📍 Synchronize Location Data
+                    </a>
                   </div>
-                  <a
-                    href={viewDetails.formatted_address}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full bg-slate-900 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-blue-600 transition-all active:scale-95"
-                  >
-                    📍 Synchronize Location Data
-                  </a>
                 </div>
               </div>
             </div>

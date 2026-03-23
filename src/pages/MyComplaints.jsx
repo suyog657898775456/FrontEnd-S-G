@@ -254,7 +254,7 @@ export default function MyComplaints() {
 
       {/* ✨ Enhanced Detail Popup Modal */}
       {selectedComplaint && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[5000] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/90 z-[5000] flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
             className={`bg-white w-full max-w-3xl rounded-[3rem] shadow-2xl overflow-hidden relative animate-in zoom-in-95 duration-300 border-t-[12px] ${selectedComplaint.status === "resolved" ? "border-emerald-500" : selectedComplaint.status === "rejected" ? "border-red-500" : "border-slate-900"}`}
           >
@@ -314,15 +314,17 @@ export default function MyComplaints() {
                       <label className="text-[9px] font-black text-red-400 uppercase block mb-1">
                         Official Proof
                       </label>
-                      <img
-                        src={getFullImgUrl(selectedComplaint.rejection_proof)}
-                        className="w-full h-32 object-cover rounded-2xl border-2 border-red-200 shadow-sm"
-                        alt="Rejection Proof"
-                        onError={(e) =>
-                          (e.target.src =
-                            "https://via.placeholder.com/300x200?text=No+Proof+Available")
-                        }
-                      />
+                      <div className="aspect-video rounded-2xl overflow-hidden border-2 border-red-200 shadow-sm bg-white">
+                        <img
+                          src={getFullImgUrl(selectedComplaint.rejection_proof)}
+                          className="w-full h-full object-cover"
+                          alt="Rejection Proof"
+                          onError={(e) =>
+                            (e.target.src =
+                              "https://via.placeholder.com/300x200?text=No+Proof+Available")
+                          }
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-col justify-center">
                       <label className="text-[9px] font-black text-red-400 uppercase block mb-1">
@@ -352,24 +354,26 @@ export default function MyComplaints() {
                   </div>
                   <div>
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-2">
-                      Original Evidence
+                      Original Evidence (Main)
                     </label>
-                    <img
-                      src={getFullImgUrl(selectedComplaint.image)}
-                      className="w-full h-48 object-cover rounded-[2rem] border-4 border-white shadow-lg"
-                      alt="Incident"
-                      onError={(e) =>
-                        (e.target.src =
-                          "https://via.placeholder.com/400x300?text=Evidence+Not+Available")
-                      }
-                    />
+                    <div className="aspect-video rounded-[2.5rem] overflow-hidden border-4 border-white shadow-lg bg-slate-100">
+                      <img
+                        src={getFullImgUrl(selectedComplaint.image)}
+                        className="w-full h-full object-cover"
+                        alt="Original Incident"
+                        onError={(e) =>
+                          (e.target.src =
+                            "https://via.placeholder.com/400x300?text=Evidence+Not+Available")
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Right Side: Multi-Department Resolution Progress */}
                 <div className="space-y-4">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                    Department Proofs
+                    Department Proofs (Resolution)
                   </label>
                   {selectedComplaint.department_tasks &&
                   selectedComplaint.department_tasks.length > 0 ? (
@@ -390,27 +394,39 @@ export default function MyComplaints() {
                         </div>
                         {task.status === "resolved" && (
                           <div className="grid grid-cols-2 gap-2">
+                            {/* 📸 Task BEFORE Image with Fallback Logic */}
                             <div className="relative group">
-                              <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10">
-                                Before
+                              <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                Before Work
                               </p>
                               <img
-                                src={getFullImgUrl(task.before_image)}
+                                src={getFullImgUrl(
+                                  task.before_image || selectedComplaint.image,
+                                )}
                                 className="w-full h-24 object-cover rounded-xl border border-slate-100"
-                                alt="Before Image"
+                                alt="Before"
+                                onError={(e) =>
+                                  (e.target.src =
+                                    "https://via.placeholder.com/200x150?text=No+Before+Img")
+                                }
                               />
                             </div>
+                            {/* 📸 Task AFTER Image */}
                             <div className="relative group">
-                              <p className="text-[7px] font-black text-slate-400 uppercase absolute top-1 left-2 z-10 text-emerald-600">
-                                After
+                              <p className="text-[7px] font-black text-emerald-600 uppercase absolute top-1 left-2 z-10 bg-white/80 px-1 rounded">
+                                After Work
                               </p>
                               <img
                                 src={getFullImgUrl(task.after_image)}
                                 className="w-full h-24 object-cover rounded-xl border-2 border-emerald-100 shadow-sm"
-                                alt="After Image"
+                                alt="After"
+                                onError={(e) =>
+                                  (e.target.src =
+                                    "https://via.placeholder.com/200x150?text=No+After+Img")
+                                }
                               />
                             </div>
-                            <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg">
+                            <p className="col-span-2 text-[10px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
                               Note:{" "}
                               {task.resolution_note || "Resolved successfully"}
                             </p>
@@ -420,8 +436,8 @@ export default function MyComplaints() {
                     ))
                   ) : (
                     <div className="p-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                      <p className="text-xs text-slate-400 font-bold">
-                        Awaiting Department Assignment...
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">
+                        Awaiting assigned department action...
                       </p>
                     </div>
                   )}
@@ -430,7 +446,6 @@ export default function MyComplaints() {
 
               {/* Action Buttons Section */}
               <div className="flex flex-col gap-4 pt-4 border-t border-slate-100">
-                {/* 🚀 New Conditional Logic: Show Feedback Link only when Resolved */}
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button
                     onClick={() =>
@@ -444,7 +459,6 @@ export default function MyComplaints() {
                   </button>
                 )}
 
-                {/* PDF Download Button */}
                 {selectedComplaint.status?.toLowerCase() === "resolved" && (
                   <button
                     onClick={() => generateReceipt(selectedComplaint)}
