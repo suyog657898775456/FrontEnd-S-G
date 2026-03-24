@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchUserComplaints } from "../services/grievanceService";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
+import SocialShare from "../components/SocialShare"; // 🚀 Added Import
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -289,6 +290,14 @@ export default function MyComplaints() {
               </div>
 
               <StatusTimeline status={selectedComplaint.status} />
+
+              {/* 🚀 Social Share Section Added Here */}
+              {selectedComplaint.status?.toLowerCase() !== "rejected" && (
+                <SocialShare
+                  complaintId={selectedComplaint.id}
+                  status={selectedComplaint.status}
+                />
+              )}
 
               {selectedComplaint.status?.toLowerCase() === "rejected" && (
                 <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 space-y-4 animate-pulse">
