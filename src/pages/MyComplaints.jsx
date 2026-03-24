@@ -362,11 +362,12 @@ export default function MyComplaints() {
                     Department Proofs (Resolution)
                   </label>
 
-                  {/* 🔥 LOGIC: Handling Both Merged (Admin) and Single (Officer) Resolution Proofs */}
+                  {/* 🔥 LOGIC: Merged (Admin) and Single (Officer) Resolution Proofs Handling */}
                   {selectedComplaint.status?.toLowerCase() === "resolved" ? (
                     <div className="space-y-4">
-                      {/* Scenario 1: Merged Complaint (Fetched from parent's after_image) */}
-                      {!selectedComplaint.department_tasks?.length &&
+                      {/* Scenario 1: Merged Complaint (Directly from parent's after_image) */}
+                      {(!selectedComplaint.department_tasks ||
+                        selectedComplaint.department_tasks.length === 0) &&
                         selectedComplaint.after_image && (
                           <div className="p-4 bg-white rounded-3xl border-2 border-slate-50 shadow-sm space-y-3">
                             <div className="flex justify-between items-center">
@@ -409,7 +410,7 @@ export default function MyComplaints() {
                           </div>
                         )}
 
-                      {/* Scenario 2: Normal/Mixed Complaint (Fetched from department_tasks) */}
+                      {/* Scenario 2: Normal/Mixed (From department_tasks array) */}
                       {selectedComplaint.department_tasks &&
                       selectedComplaint.department_tasks.length > 0
                         ? selectedComplaint.department_tasks.map(
@@ -518,7 +519,6 @@ export default function MyComplaints() {
   );
 }
 
-
 function ComplaintGroup({ title, data, color, onCardClick }) {
   if (data.length === 0) return null;
   const colors = {
@@ -551,7 +551,9 @@ function ComplaintGroup({ title, data, color, onCardClick }) {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400">
-                <span className="text-blue-500 font-black">#Complaint-{c.id}</span>
+                <span className="text-blue-500 font-black">
+                  #Complaint-{c.id}
+                </span>
                 <span>{new Date(c.created_at).toLocaleDateString()}</span>
               </div>
               <div className="flex -space-x-2">

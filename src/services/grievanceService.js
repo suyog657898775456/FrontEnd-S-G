@@ -132,3 +132,14 @@ export const takeAdminAction = async (id, data) => {
     throw error;
   }
 };
+
+// Social Share Content API call
+export const getSocialShareContent = async (grievanceId) => {
+  try {
+    const response = await API.get(`grievances/share-content/${grievanceId}/`);
+    return response.data; // { "message": "...", "link": "..." }
+  } catch (error) {
+    console.error("Share Content Error:", error);
+    throw error;
+  }
+};
