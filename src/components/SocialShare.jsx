@@ -1,11 +1,5 @@
 import React, { useState } from "react";
 import { getSocialShareContent } from "../services/grievanceService";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faWhatsapp,
-  faFacebookF,
-  faXTwitter,
-} from "@fortawesome/free-brands-icons";
 
 const SocialShare = ({ complaintId, status }) => {
   const [isSharing, setIsSharing] = useState(false);
@@ -13,89 +7,74 @@ const SocialShare = ({ complaintId, status }) => {
   const handleShare = async (platform) => {
     try {
       setIsSharing(true);
-      // Fetch dynamic content from backend
       const { message, link } = await getSocialShareContent(complaintId);
-
       const encodedMsg = encodeURIComponent(message);
       const encodedLink = encodeURIComponent(link);
 
       let url = "";
-      switch (platform) {
-        case "whatsapp":
-          // WhatsApp uses 'text' parameter for both message and link
-          url = `https://api.whatsapp.com/send?text=${encodedMsg}%20${encodedLink}`;
-          break;
-        case "twitter":
-          // X (Twitter) works best with text and url separated
-          url = `https://twitter.com/intent/tweet?text=${encodedMsg}&url=${encodedLink}`;
-          break;
-        case "facebook":
-          // Facebook primarily shares the URL and scrapes metadata
-          url = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
-          break;
-        default:
-          break;
+      if (platform === "whatsapp") {
+        url = `https://api.whatsapp.com/send?text=${encodedMsg}%20${encodedLink}`;
+      } else if (platform === "twitter") {
+        url = `https://twitter.com/intent/tweet?text=${encodedMsg}&url=${encodedLink}`;
+      } else if (platform === "facebook") {
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodedLink}`;
       }
 
-      if (url) {
-        window.open(url, "_blank", "noopener,noreferrer");
-      }
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      console.error("Sharing failed:", err);
-      alert("System Error: Could not generate shareable link.");
+      alert("Sharing failed. Please try again.");
     } finally {
       setIsSharing(false);
     }
   };
 
   return (
-    <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mt-6 animate-in slide-in-from-bottom-2 duration-500">
-      <div className="text-center mb-4">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-          Social Redressal Terminal
-        </p>
-        <h4 className="text-xs font-bold text-slate-600 mt-1">
-          {status === "resolved"
-            ? "Share the success with your community"
-            : "Mobilize public support for this issue"}
-        </h4>
-      </div>
+    <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 mt-6 animate-in slide-in-from-bottom-2 duration-500">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center mb-4">
+        Share Complaint Progress
+      </p>
 
-      <div className="flex justify-center gap-4">
-        {/* WhatsApp Button */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* WhatsApp */}
         <button
           onClick={() => handleShare("whatsapp")}
           disabled={isSharing}
-          className="w-12 h-12 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-green-100 hover:scale-110 active:scale-90 transition-all disabled:opacity-50"
-          title="Share on WhatsApp"
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white border border-green-100 hover:bg-green-50 transition-all group"
         >
-          <FontAwesomeIcon icon={faWhatsapp} className="text-xl" />
+          <span className="text-xl mb-1">💬</span>
+          <span className="text-[9px] font-black text-green-600 uppercase">
+            WhatsApp
+          </span>
         </button>
 
-        {/* Twitter / X Button */}
+        {/* Twitter */}
         <button
           onClick={() => handleShare("twitter")}
           disabled={isSharing}
-          className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shadow-lg shadow-slate-200 hover:scale-110 active:scale-90 transition-all disabled:opacity-50"
-          title="Share on X (Twitter)"
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 transition-all"
         >
-          <FontAwesomeIcon icon={faXTwitter} className="text-xl" />
+          <span className="text-xl mb-1">🐦</span>
+          <span className="text-[9px] font-black text-slate-800 uppercase">
+            Twitter
+          </span>
         </button>
 
-        {/* Facebook Button */}
+        {/* Facebook */}
         <button
           onClick={() => handleShare("facebook")}
           disabled={isSharing}
-          className="w-12 h-12 rounded-2xl bg-[#1877F2] text-white flex items-center justify-center shadow-lg shadow-blue-100 hover:scale-110 active:scale-90 transition-all disabled:opacity-50"
-          title="Share on Facebook"
+          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white border border-blue-100 hover:bg-blue-50 transition-all"
         >
-          <FontAwesomeIcon icon={faFacebookF} className="text-lg" />
+          <span className="text-xl mb-1">👥</span>
+          <span className="text-[9px] font-black text-blue-600 uppercase">
+            Facebook
+          </span>
         </button>
       </div>
 
       {isSharing && (
-        <p className="text-[8px] text-blue-500 font-bold text-center mt-3 animate-pulse uppercase tracking-widest">
-          Generating Secure Share Link...
+        <p className="text-[8px] text-blue-500 font-bold text-center mt-3 animate-pulse uppercase">
+          Generating Secure Link...
         </p>
       )}
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { fetchUserComplaints } from "../services/grievanceService";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
+import SocialShare from "../components/SocialShare"; // Professional Integration
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -94,7 +95,6 @@ export default function MyComplaints() {
       const resolvedTask = complaint.department_tasks?.find(
         (t) => t.status === "resolved",
       );
-      // 🔥 Logical Update for PDF: Fetch from task or parent direct after_image
       const afterUrl = resolvedTask
         ? getFullImgUrl(resolvedTask.after_image)
         : complaint.after_image
@@ -290,6 +290,14 @@ export default function MyComplaints() {
 
               <StatusTimeline status={selectedComplaint.status} />
 
+              {/* 🚀 Social Share Section Integration */}
+              {selectedComplaint.status?.toLowerCase() !== "rejected" && (
+                <SocialShare
+                  complaintId={selectedComplaint.id}
+                  status={selectedComplaint.status}
+                />
+              )}
+
               {selectedComplaint.status?.toLowerCase() === "rejected" && (
                 <div className="bg-red-50 p-6 rounded-[2.5rem] border-2 border-red-100 space-y-4 animate-pulse">
                   <div className="flex justify-between items-center">
@@ -362,10 +370,8 @@ export default function MyComplaints() {
                     Department Proofs (Resolution)
                   </label>
 
-                  {/* 🔥 LOGIC: Merged (Admin) and Single (Officer) Resolution Proofs Handling */}
                   {selectedComplaint.status?.toLowerCase() === "resolved" ? (
                     <div className="space-y-4">
-                      {/* Scenario 1: Merged Complaint (Directly from parent's after_image) */}
                       {(!selectedComplaint.department_tasks ||
                         selectedComplaint.department_tasks.length === 0) &&
                         selectedComplaint.after_image && (
@@ -410,7 +416,6 @@ export default function MyComplaints() {
                           </div>
                         )}
 
-                      {/* Scenario 2: Normal/Mixed (From department_tasks array) */}
                       {selectedComplaint.department_tasks &&
                       selectedComplaint.department_tasks.length > 0
                         ? selectedComplaint.department_tasks.map(
@@ -489,7 +494,7 @@ export default function MyComplaints() {
                     }
                     className="w-full bg-emerald-600 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 active:scale-95"
                   >
-                    ⭐ FeedBack Service
+                    ⭐ Authenticate Service Quality
                   </button>
                 )}
 

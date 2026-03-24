@@ -638,7 +638,6 @@ export default function AdminDashboard() {
                 <th className="px-8 py-6">Sectors</th>
                 <th className="px-8 py-6 text-center">Severity</th>
                 <th className="px-8 py-6 text-center">Status</th>
-                <th className="px-8 py-6 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -773,9 +772,9 @@ export default function AdminDashboard() {
 
         {viewDetails && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
-            {/* ✨ Clean Light Backdrop (No blur, no dark) */}
+            {/* Clean Dark Backdrop (No Blur as requested) */}
             <div
-              className="absolute inset-0 bg-white/40 animate-in fade-in duration-300 cursor-pointer"
+              className="absolute inset-0 bg-slate-500/10 backdrop-blur-[2px] animate-in fade-in duration-300 cursor-pointer"
               onClick={() => setViewDetails(null)}
             />
 
