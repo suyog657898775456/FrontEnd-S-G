@@ -118,13 +118,14 @@ export const resolveGrievanceWithPhoto = async (id, photoFile, note) => {
   }
 };
 
-// 🤖 AI/Admin Action Endpoint (Matches your Take Action Feature)
-export const takeAdminAction = async (id, actionType, reason) => {
+// 🤖 AI/Admin Action Endpoint (Fixed & Flexible)
+export const takeAdminAction = async (id, data) => {
   try {
     const response = await API.post(`grievances/admin/take-action/${id}/`, {
-      action_type: actionType, // "REASSIGN" or "WARNING"
-      reason: reason,
+      action_type: data.action_type, // ✅ correct key
+      reason: data.reason, // ✅ correct key
     });
+
     return response.data;
   } catch (error) {
     console.error("Admin Action Failed:", error.response?.data);

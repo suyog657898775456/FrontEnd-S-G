@@ -100,32 +100,40 @@ export default function AdminDashboard() {
   };
 
   const handleAdminAction = async (id, type) => {
-    // 1. User se reason maangein
+    // 1. Ask reason from admin
     const reason = prompt(`Enter official reason for ${type}:`);
 
-    // Agar user Cancel kar de ya khali chhode toh ruk jayein
-    if (!reason) {
-      alert("Action aborted: Reason is required.");
+    // 2. Validation
+    if (!reason || !reason.trim()) {
+      alert("❌ Action aborted: Reason is required.");
       return;
     }
 
     try {
-      // 2. Service call karein
-      const res = await takeAdminAction(id, type, reason);
+      // 3. ✅ FIXED API CALL (Correct format)
+      const res = await takeAdminAction(id, {
+        action_type: type, // 🔥 important change
+        reason: reason.trim(),
+      });
 
-      // 3. Success handling
+      // 4. Success handling
       alert(
-        `✅ System Updated: ${res.message || "Action processed successfully"}`,
+        `✅ System Updated: ${
+          res?.data?.message || "Action processed successfully"
+        }`,
       );
+
       loadData();
       setViewDetails(null);
     } catch (error) {
-      // 4. Error handling (Isse aapko pata chalega backend kyun mana kar raha hai)
       console.error("Action Error:", error);
+
       const serverError =
         error.response?.data?.detail ||
         error.response?.data?.error ||
+        error.response?.data?.message ||
         "Action Failed";
+
       alert(`❌ Error: ${serverError}`);
     }
   };
@@ -683,20 +691,41 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span
-                      className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase border-2 transition-all ${{ critical: "bg-red-100 text-red-700 border-red-200 animate-pulse", high: "bg-orange-100 text-orange-700 border-orange-200", medium: "bg-blue-100 text-blue-700 border-blue-200", low: "bg-slate-100 text-slate-500 border-slate-200" }[c.priority?.toLowerCase()] || "bg-slate-50 text-slate-400 border-slate-100"}`}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase border-2 transition-all shadow-sm ${
+                        {
+                          critical:
+                            "bg-red-600 text-white border-red-700 shadow-red-300/60 animate-pulse",
+                          high: "bg-orange-500 text-white border-orange-600 shadow-orange-300/50",
+                          medium:
+                            "bg-blue-600 text-white border-blue-700 shadow-blue-200/50",
+                          low: "bg-gray-500 text-white border-gray-600 shadow-gray-300/40",
+                        }[c.priority?.toLowerCase()] ||
+                        "bg-gray-400 text-white border-gray-500"
+                      }`}
                     >
                       {c.priority}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-center">
                     <span
-                      className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border-2 transition-all ${{ pending: "bg-blue-50 text-blue-600 border-blue-100", in_progress: "bg-amber-50 text-amber-600 border-amber-100 animate-pulse", resolved: "bg-emerald-50 text-emerald-700 border-emerald-100", rejected: "bg-red-50 text-red-700 border-red-100", escalated: "bg-purple-50 text-purple-700 border-purple-100" }[c.status?.toLowerCase().replace(" ", "_")] || "bg-slate-50 text-slate-500 border-slate-100"}`}
+                      className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase border-2 transition-all shadow-sm ${
+                        {
+                          pending:
+                            "bg-blue-600 text-white border-blue-700 shadow-blue-200/50",
+                          in_progress:
+                            "bg-yellow-500 text-white border-yellow-600 shadow-yellow-300/60 animate-pulse",
+                          resolved:
+                            "bg-green-600 text-white border-green-700 shadow-green-200/50",
+                          rejected:
+                            "bg-red-600 text-white border-red-700 shadow-red-200/50",
+                          escalated:
+                            "bg-purple-600 text-white border-purple-700 shadow-purple-200/50",
+                        }[c.status?.toLowerCase().replace(" ", "_")] ||
+                        "bg-gray-400 text-white border-gray-500"
+                      }`}
                     >
                       {c.status?.replace("_", " ")}
                     </span>
-                  </td>
-                  <td className="px-8 py-6 text-right font-black text-blue-400 text-[10px] uppercase group-hover:text-blue-600">
-                    Analyze & Manage →
                   </td>
                 </tr>
               ))}
@@ -744,9 +773,9 @@ export default function AdminDashboard() {
 
         {viewDetails && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
-            {/* Clean Dark Backdrop (No Blur as requested) */}
+            {/* ✨ Clean Light Backdrop (No blur, no dark) */}
             <div
-              className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
+              className="absolute inset-0 bg-white/40 animate-in fade-in duration-300 cursor-pointer"
               onClick={() => setViewDetails(null)}
             />
 
@@ -759,7 +788,7 @@ export default function AdminDashboard() {
                     Case Intelligence Center
                   </h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                    Ticket Reference: #{viewDetails.id}
+                    Complaint Reference: #{viewDetails.id}
                   </p>
                 </div>
                 <button
@@ -836,9 +865,9 @@ export default function AdminDashboard() {
                                   "in_progress",
                                 )
                               }
-                              className="bg-amber-100 text-amber-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-amber-200 hover:bg-amber-200 transition-all shadow-sm"
+                              className="bg-yellow-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase border border-yellow-600 hover:bg-yellow-600 transition-all shadow-lg shadow-yellow-300/50 active:scale-95"
                             >
-                              Mark In Progress
+                              ⚡ Mark In Progress
                             </button>
                           </div>
                         </div>

@@ -488,7 +488,7 @@ export default function MyComplaints() {
                     }
                     className="w-full bg-emerald-600 text-white p-5 rounded-[2rem] text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3 active:scale-95"
                   >
-                    ⭐ Authenticate Service Quality
+                    ⭐ FeedBack Service
                   </button>
                 )}
 
@@ -551,7 +551,7 @@ function ComplaintGroup({ title, data, color, onCardClick }) {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400">
-                <span className="text-blue-500 font-black">#TICKET-{c.id}</span>
+                <span className="text-blue-500 font-black">#Complaint-{c.id}</span>
                 <span>{new Date(c.created_at).toLocaleDateString()}</span>
               </div>
               <div className="flex -space-x-2">

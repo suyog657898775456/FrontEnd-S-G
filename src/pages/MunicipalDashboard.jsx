@@ -226,7 +226,7 @@ const MunicipalDashboard = () => {
               icon="📂"
             />
             <StatCard
-              title="Active Queue"
+              title="Pending"
               value={stats.pending}
               color="bg-yellow-600"
               icon="⏳"
@@ -318,12 +318,11 @@ const MunicipalDashboard = () => {
 
       {viewDetails && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden pointer-events-auto">
-          {/* ✨ Clean Dark Backdrop */}
+          {/* ✨ Clean Light Backdrop */}
           <div
-            className="absolute inset-0 bg-slate-900/80 animate-in fade-in duration-300"
+            className="absolute inset-0 bg-gray-200/30 animate-in fade-in duration-300 cursor-pointer"
             onClick={() => setViewDetails(null)}
           />
-
           {/* ✨ Main Modal Container */}
           <div className="relative bg-white w-full max-w-5xl max-h-[92vh] rounded-[3.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col mx-4 border border-white/20">
             {/* 🟢 Header Section */}
